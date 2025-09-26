@@ -1,0 +1,31 @@
+#--- 웹 프레임워크 ---
+fastapi
+uvicorn[standard]
+
+#--- HTTP 클라이언트 (상용 AI API 호출용) ---
+httpx
+
+#--- 데이터 검증 및 설정 관리 ---
+pydantic
+pydantic-settings
+python-dotenv
+
+#--- RAG 시스템 의존성 ---
+chromadb              # 벡터 데이터베이스
+sentence-transformers # 로컬 임베딩 (백업용)
+
+#--- 문서 처리 의존성 ---
+PyMuPDF               # PDF 처리 (fitz)
+python-docx           # DOCX 처리
+markdown              # 마크다운 처리
+beautifulsoup4        # HTML 파싱 (마크다운용)
+
+#--- 레거시 AI/ML 패키지 (필요시 주석 해제) ---
+# ollama # 로컬 Ollama 사용시
+# transformers
+# torch
+# accelerate
+# bitsandbytes
+
+#--- 기타 패키지 ---
+python-multipart  # FastAPI 파일 업로드용

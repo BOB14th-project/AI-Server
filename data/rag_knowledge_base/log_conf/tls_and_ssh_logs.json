@@ -1,0 +1,74 @@
+{
+  "log_patterns": [
+    {
+      "type": "log_pattern",
+      "category": "TLS_handshake_RSA",
+      "content": "TLS 핸드셰이크 로그에서 RSA 키 교환: 'Cipher suite: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384', 'Server certificate: RSA 2048 bit'. RSA 인증서와 서명은 양자 컴퓨터에 취약합니다.",
+      "confidence": 0.95,
+      "source": "TLS_log_analysis",
+      "keywords": ["TLS_ECDHE_RSA", "RSA 2048 bit", "Server certificate", "Cipher suite"],
+      "log_types": ["ssl", "tls", "https"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Certificate_signature",
+      "content": "X.509 인증서 서명 알고리즘: 'Certificate signature algorithm: sha256WithRSAEncryption', 'Public key algorithm: rsaEncryption'. RSA 기반 인증서는 양자 컴퓨터에 취약합니다.",
+      "confidence": 1.0,
+      "source": "X509_certificate_analysis",
+      "keywords": ["sha256WithRSAEncryption", "rsaEncryption", "Certificate signature algorithm"],
+      "log_types": ["cert", "ssl", "tls"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_host_key",
+      "content": "SSH 호스트 키 로그: 'Server host key: ssh-rsa AAAAB3...', 'Host key verification successful (ssh-rsa)'. ssh-rsa 호스트 키는 RSA를 사용하므로 양자 컴퓨터에 취약합니다.",
+      "confidence": 0.9,
+      "source": "SSH_connection_logs",
+      "keywords": ["Server host key: ssh-rsa", "ssh-rsa AAAAB3", "Host key verification"],
+      "log_types": ["ssh", "sshd", "auth"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_ECDSA",
+      "content": "SSH ECDSA 호스트 키: 'Server host key: ecdsa-sha2-nistp256', 'Host key algorithm: ecdsa-sha2-nistp384'. ECDSA는 타원곡선 암호화를 사용하므로 양자 컴퓨터에 취약합니다.",
+      "confidence": 0.9,
+      "source": "SSH_ECDSA_analysis",
+      "keywords": ["ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "Host key algorithm"],
+      "log_types": ["ssh", "sshd"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "TLS_ECDHE",
+      "content": "TLS ECDHE 키 교환 로그: 'Key exchange: ECDHE-RSA', 'Curve: prime256v1 (secp256r1)'. ECDHE는 타원곡선 Diffie-Hellman을 사용하므로 양자 컴퓨터에 취약합니다.",
+      "confidence": 0.85,
+      "source": "TLS_ECDHE_analysis",
+      "keywords": ["ECDHE-RSA", "prime256v1", "secp256r1", "Key exchange"],
+      "log_types": ["ssl", "tls"],
+      "severity": "high"
+    },
+    {
+      "type": "safe_pattern",
+      "category": "SSH_Ed25519_logs",
+      "content": "SSH Ed25519 호스트 키 로그: 'Server host key: ssh-ed25519', 'Host key verification successful (ssh-ed25519)'. Ed25519는 현재 권장되는 알고리즘이지만 여전히 양자 컴퓨터에는 취약합니다.",
+      "confidence": 0.7,
+      "source": "SSH_Ed25519_logs",
+      "keywords": ["ssh-ed25519", "Host key verification successful"],
+      "log_types": ["ssh", "sshd"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Certificate_expiry",
+      "content": "인증서 만료 관련 로그: 'Certificate will expire in X days', 'Certificate validation failed: expired'. 인증서 갱신 시 양자내성 알고리즘으로 전환할 기회입니다.",
+      "confidence": 0.6,
+      "source": "Certificate_lifecycle",
+      "keywords": ["Certificate will expire", "Certificate validation failed", "expired"],
+      "log_types": ["cert", "ssl", "tls"],
+      "severity": "low"
+    }
+  ]
+}
