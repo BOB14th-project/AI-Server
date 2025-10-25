@@ -143,9 +143,9 @@ class KnowledgeManager:
         """
         if self.agent_type == "source_code":
             return self._get_source_code_knowledge()
-        elif self.agent_type == "binary":
+        elif self.agent_type == "assembly_binary":
             return self._get_binary_knowledge()
-        elif self.agent_type == "log_conf":
+        elif self.agent_type == "logs_config":
             return self._get_log_conf_knowledge()
         else:
             return []
@@ -283,7 +283,7 @@ class KnowledgeManager:
             # 쿼리 전처리
             if self.agent_type == "source_code":
                 processed_query = self.embedding_service.preprocess_code(query)
-            elif self.agent_type == "log_conf":
+            elif self.agent_type == "logs_config":
                 processed_query = self.embedding_service.preprocess_config(query)
             else:
                 processed_query = query
@@ -403,8 +403,8 @@ class KnowledgeManagerFactory:
 async def get_source_code_knowledge_manager() -> KnowledgeManager:
     return await KnowledgeManagerFactory.get_manager("source_code")
 
-async def get_binary_knowledge_manager() -> KnowledgeManager:
-    return await KnowledgeManagerFactory.get_manager("binary")
+async def get_assembly_binary_knowledge_manager() -> KnowledgeManager:
+    return await KnowledgeManagerFactory.get_manager("assembly_binary")
 
-async def get_log_conf_knowledge_manager() -> KnowledgeManager:
-    return await KnowledgeManagerFactory.get_manager("log_conf")
+async def get_logs_config_knowledge_manager() -> KnowledgeManager:
+    return await KnowledgeManagerFactory.get_manager("logs_config")

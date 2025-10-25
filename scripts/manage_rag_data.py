@@ -21,7 +21,7 @@ from pqc_inspector_server.services.vector_store import VectorStoreFactory
 class RAGDataManager:
     def __init__(self):
         self.knowledge_base_path = project_root / "data" / "rag_knowledge_base"
-        self.agent_types = ["source_code", "binary", "log_conf"]
+        self.agent_types = ["source_code", "assembly_binary", "logs_config"]
 
     async def load_json_files(self, agent_type: str) -> List[Dict[str, Any]]:
         """지정된 에이전트 타입의 모든 JSON 파일을 로드합니다."""
@@ -189,7 +189,7 @@ async def main():
         print("  test agent_type query     - 검색 기능 테스트")
         print("  clear agent_type          - 벡터 DB 초기화")
         print("  add agent_type content    - 단일 지식 추가")
-        print("\n에이전트 타입: source_code, binary, log_conf")
+        print("\n에이전트 타입: source_code, assembly_binary, logs_config")
         return
 
     command = sys.argv[1]

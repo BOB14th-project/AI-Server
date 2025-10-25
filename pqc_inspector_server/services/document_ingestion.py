@@ -15,7 +15,7 @@ class DocumentIngestionPipeline:
     def __init__(self):
         self.processor = get_document_processor()
         self.embedding_service = get_embedding_service()
-        self.supported_agents = ["source_code", "binary", "log_conf"]
+        self.supported_agents = ["source_code", "assembly_binary", "logs_config"]
 
     async def ingest_single_document(
         self,

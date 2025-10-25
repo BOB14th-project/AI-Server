@@ -149,8 +149,8 @@ class VectorStoreFactory:
 def get_source_code_vector_store() -> VectorStore:
     return VectorStoreFactory.get_store("source_code")
 
-def get_binary_vector_store() -> VectorStore:
-    return VectorStoreFactory.get_store("binary")
+def get_assembly_binary_vector_store() -> VectorStore:
+    return VectorStoreFactory.get_store("assembly_binary")
 
-def get_log_conf_vector_store() -> VectorStore:
-    return VectorStoreFactory.get_store("log_conf")
+def get_logs_config_vector_store() -> VectorStore:
+    return VectorStoreFactory.get_store("logs_config")

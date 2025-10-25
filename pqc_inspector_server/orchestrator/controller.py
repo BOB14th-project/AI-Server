@@ -6,8 +6,8 @@ from fastapi import UploadFile, Depends
 # --- 의존성 임포트 변경 및 추가 ---
 from ..db.api_client import ExternalAPIClient, get_api_client
 from ..agents.source_code import SourceCodeAgent
-from ..agents.binary import BinaryAgent
-from ..agents.log_conf import LogConfAgent
+from ..agents.assembly_binary import AssemblyBinaryAgent
+from ..agents.logs_config import LogsConfigAgent
 from ..api.schemas import AnalysisResultCreate
 from ..services.ai_service import AIService, get_ai_service
 from ..core.config import settings
@@ -21,8 +21,8 @@ class OrchestratorController:
         self.orchestrator_model = settings.ORCHESTRATOR_MODEL
         self.agents = {
             "source_code": SourceCodeAgent(),
-            "binary": BinaryAgent(),
-            "log_conf": LogConfAgent()
+            "assembly_binary": AssemblyBinaryAgent(),
+            "logs_config": LogsConfigAgent()
         }
         print("OrchestratorController가 AI 오케스트레이터와 함께 초기화되었습니다.")
 
@@ -59,8 +59,8 @@ class OrchestratorController:
 
 분류 카테고리:
 1. source_code: 프로그래밍 언어 소스코드 (.py, .java, .c, .go, .js 등)
-2. binary: 실행 파일, 라이브러리 (.exe, .so, .dll 등)
-3. log_conf: 로그 파일, 서버 설정 (.log, .conf, .ini 등)
+2. assembly_binary: 실행 파일, 라이브러리, 어셈블리 코드 (.exe, .so, .dll, .asm 등)
+3. logs_config: 로그 파일, 서버 설정 (.log, .conf, .ini 등)
 
 JSON 형식으로만 응답:
 {{"file_type": "카테고리명", "confidence": 0.0-1.0, "reasoning": "분류 근거"}}"""
@@ -88,7 +88,7 @@ JSON 형식으로만 응답:
                         reasoning = classification_result.get("reasoning", "")
                         
                         # 유효한 타입인지 검증
-                        valid_types = ["source_code", "binary", "log_conf"]
+                        valid_types = ["source_code", "assembly_binary", "logs_config"]
                         if file_type not in valid_types:
                             file_type = self._fallback_classification(file.filename)
                         
@@ -116,13 +116,13 @@ JSON 형식으로만 응답:
         extension_map = {
             '.py': 'source_code', '.java': 'source_code', '.c': 'source_code', '.cpp': 'source_code',
             '.go': 'source_code', '.js': 'source_code', '.ts': 'source_code', '.rs': 'source_code',
-            '.log': 'log_conf', '.conf': 'log_conf', '.txt': 'log_conf',
-            '.json': 'log_conf', '.yaml': 'log_conf', '.yml': 'log_conf', '.xml': 'log_conf',
-            '.toml': 'log_conf', '.ini': 'log_conf', '.cfg': 'log_conf', '.config': 'log_conf'
+            '.log': 'logs_config', '.conf': 'logs_config', '.txt': 'logs_config',
+            '.json': 'logs_config', '.yaml': 'logs_config', '.yml': 'logs_config', '.xml': 'logs_config',
+            '.toml': 'logs_config', '.ini': 'logs_config', '.cfg': 'logs_config', '.config': 'logs_config'
         }
-        
+
         file_ext = "." + filename.split('.')[-1].lower()
-        file_type = extension_map.get(file_ext, "binary")
+        file_type = extension_map.get(file_ext, "assembly_binary")
         
         print(f"폴백 분류: '{filename}' → '{file_type}' (확장자 기반)")
         return file_type
@@ -224,8 +224,8 @@ JSON 형식으로만 응답:
 
 분류 카테고리:
 1. source_code: 프로그래밍 언어 소스코드 (.py, .java, .c, .go, .js 등)
-2. binary: 실행 파일, 라이브러리 (.exe, .so, .dll 등)
-3. log_conf: 로그 파일, 서버 설정 (.log, .conf, .ini 등)
+2. assembly_binary: 실행 파일, 라이브러리, 어셈블리 코드 (.exe, .so, .dll, .asm 등)
+3. logs_config: 로그 파일, 서버 설정 (.log, .conf, .ini 등)
 
 JSON 형식으로만 응답:
 {{"file_type": "카테고리명", "confidence": 0.0-1.0, "reasoning": "분류 근거"}}"""
@@ -253,7 +253,7 @@ JSON 형식으로만 응답:
                         reasoning = classification_result.get("reasoning", "")
                         
                         # 유효한 타입인지 검증
-                        valid_types = ["source_code", "binary", "log_conf"]
+                        valid_types = ["source_code", "assembly_binary", "logs_config"]
                         if file_type not in valid_types:
                             file_type = self._fallback_classification(filename)
                         
