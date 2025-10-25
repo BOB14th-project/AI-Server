@@ -152,8 +152,5 @@ def get_source_code_vector_store() -> VectorStore:
 def get_binary_vector_store() -> VectorStore:
     return VectorStoreFactory.get_store("binary")
 
-def get_parameter_vector_store() -> VectorStore:
-    return VectorStoreFactory.get_store("parameter")
-
 def get_log_conf_vector_store() -> VectorStore:
     return VectorStoreFactory.get_store("log_conf")

@@ -201,7 +201,7 @@ class DocumentIngestionCLI:
             # 각 에이전트에서 검색 테스트
             from pqc_inspector_server.services.knowledge_manager import KnowledgeManagerFactory
 
-            for agent_type in ["source_code", "binary", "parameter", "log_conf"]:
+            for agent_type in ["source_code", "binary", "log_conf"]:
                 try:
                     manager = await KnowledgeManagerFactory.get_manager(agent_type)
                     result = await manager.search_relevant_context(file_name, top_k=1)
@@ -222,7 +222,7 @@ async def main():
                        help="수집 명령")
     parser.add_argument("paths", nargs="*", help="파일 또는 디렉토리 경로")
     parser.add_argument("--agent-type", "-a", default="auto",
-                       choices=["auto", "source_code", "binary", "parameter", "log_conf"],
+                       choices=["auto", "source_code", "binary", "log_conf"],
                        help="대상 에이전트 타입")
     parser.add_argument("--no-recursive", action="store_true",
                        help="디렉토리 수집시 재귀 검색 비활성화")

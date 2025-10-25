@@ -145,8 +145,6 @@ class KnowledgeManager:
             return self._get_source_code_knowledge()
         elif self.agent_type == "binary":
             return self._get_binary_knowledge()
-        elif self.agent_type == "parameter":
-            return self._get_parameter_knowledge()
         elif self.agent_type == "log_conf":
             return self._get_log_conf_knowledge()
         else:
@@ -225,32 +223,6 @@ class KnowledgeManager:
             }
         ]
 
-    def _get_parameter_knowledge(self) -> List[Dict[str, Any]]:
-        """파라미터/설정 분석을 위한 지식 베이스"""
-        return [
-            {
-                "type": "config_pattern",
-                "category": "JWT",
-                "content": "JWT 알고리즘 설정: RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512는 모두 양자 취약 알고리즘입니다. 설정 파일에서 'algorithm': 'RS256' 같은 패턴을 탐지해야 합니다.",
-                "confidence": 1.0,
-                "source": "JWT_RFC"
-            },
-            {
-                "type": "config_pattern",
-                "category": "TLS",
-                "content": "TLS 설정에서 양자 취약 cipher suite들: RSA 키 교환, ECDHE-RSA, ECDHE-ECDSA, DHE-RSA. ssl_cipher_list, cipher_suites 설정에서 이런 값들을 탐지해야 합니다.",
-                "confidence": 1.0,
-                "source": "TLS_standards"
-            },
-            {
-                "type": "config_pattern",
-                "category": "SSH",
-                "content": "SSH 설정의 양자 취약 요소들: ssh-rsa, ecdsa-sha2-nistp256, ssh-dss 등의 호스트 키 타입. PubkeyAcceptedKeyTypes, HostKeyAlgorithms 설정에서 탐지됩니다.",
-                "confidence": 1.0,
-                "source": "SSH_RFC"
-            }
-        ]
-
     def _get_log_conf_knowledge(self) -> List[Dict[str, Any]]:
         """로그/설정 분석을 위한 지식 베이스"""
         return [
@@ -274,6 +246,27 @@ class KnowledgeManager:
                 "content": "SSH 로그 패턴: 'Server host key: ssh-rsa', 'User authentication method: publickey (ssh-rsa)'. SSH 연결 로그에서 양자 취약 키 타입들을 탐지합니다.",
                 "confidence": 0.8,
                 "source": "SSH_log_analysis"
+            },
+            {
+                "type": "config_pattern",
+                "category": "JWT",
+                "content": "JWT 알고리즘 설정: RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512는 모두 양자 취약 알고리즘입니다. 설정 파일에서 'algorithm': 'RS256' 같은 패턴을 탐지해야 합니다.",
+                "confidence": 1.0,
+                "source": "JWT_RFC"
+            },
+            {
+                "type": "config_pattern",
+                "category": "TLS",
+                "content": "TLS 설정에서 양자 취약 cipher suite들: RSA 키 교환, ECDHE-RSA, ECDHE-ECDSA, DHE-RSA. ssl_cipher_list, cipher_suites 설정에서 이런 값들을 탐지해야 합니다.",
+                "confidence": 1.0,
+                "source": "TLS_standards"
+            },
+            {
+                "type": "config_pattern",
+                "category": "SSH",
+                "content": "SSH 설정의 양자 취약 요소들: ssh-rsa, ecdsa-sha2-nistp256, ssh-dss 등의 호스트 키 타입. PubkeyAcceptedKeyTypes, HostKeyAlgorithms 설정에서 탐지됩니다.",
+                "confidence": 1.0,
+                "source": "SSH_RFC"
             }
         ]
 
@@ -290,7 +283,7 @@ class KnowledgeManager:
             # 쿼리 전처리
             if self.agent_type == "source_code":
                 processed_query = self.embedding_service.preprocess_code(query)
-            elif self.agent_type in ["parameter", "log_conf"]:
+            elif self.agent_type == "log_conf":
                 processed_query = self.embedding_service.preprocess_config(query)
             else:
                 processed_query = query
@@ -412,9 +405,6 @@ async def get_source_code_knowledge_manager() -> KnowledgeManager:
 
 async def get_binary_knowledge_manager() -> KnowledgeManager:
     return await KnowledgeManagerFactory.get_manager("binary")
-
-async def get_parameter_knowledge_manager() -> KnowledgeManager:
-    return await KnowledgeManagerFactory.get_manager("parameter")
 
 async def get_log_conf_knowledge_manager() -> KnowledgeManager:
     return await KnowledgeManagerFactory.get_manager("log_conf")

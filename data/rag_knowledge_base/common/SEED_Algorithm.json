@@ -1,0 +1,77 @@
+{
+  "algorithm": "SEED",
+  "type": "symmetric_block_cipher",
+  "patterns": [
+    {
+      "type": "algorithm_info",
+      "category": "SEED_Overview",
+      "content": "SEED is a 128-bit block cipher developed by KISA (Korea Information Security Agency) in 1998. Block size: 128 bits fixed. Key size: 128 bits. Rounds: 16. Structure: Feistel network with F-function. It's a symmetric cipher, relatively safe against quantum computers but 256-bit keys recommended for long-term security.",
+      "confidence": 1.0,
+      "source": "SEED_Specification",
+      "severity": "low",
+      "quantum_resistance": "Symmetric cipher - Grover's algorithm reduces security by half (128-bit → 64-bit effective)"
+    },
+    {
+      "type": "code_pattern",
+      "category": "SEED_Implementation",
+      "content": "SEED implementation patterns in code: import seed, from seed import SEED, SEED_encrypt(), SEED_decrypt(), seed.new(key, mode). Libraries: pyseed, libseed, seed-cipher packages.",
+      "confidence": 0.9,
+      "source": "SEED_Libraries",
+      "keywords": ["import seed", "from seed", "SEED_encrypt", "SEED_decrypt", "seed.new", "SEED.MODE_CBC"],
+      "file_extensions": [".py", ".c", ".java", ".js"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SEED_Configuration",
+      "content": "SEED in configuration files: cipher: SEED-128-CBC, encryption_algorithm: SEED, block_cipher: SEED. Often used in Korean government/financial systems.",
+      "confidence": 0.85,
+      "source": "SEED_Config",
+      "keywords": ["SEED-128", "cipher: SEED", "algorithm: SEED", "SEED-CBC", "SEED-ECB"],
+      "severity": "low",
+      "note": "Check mode - ECB is insecure, use CBC/CTR/GCM"
+    },
+    {
+      "type": "binary_signature",
+      "category": "SEED_Binary",
+      "content": "SEED binary signatures: SEED_Encrypt, SEED_Decrypt, SEED_KeySchedule, SEED_RoundFunction function names. S-box tables for SEED (SS0, SS1, SS2, SS3). Feistel structure with 16 rounds.",
+      "confidence": 0.8,
+      "source": "SEED_Binary_Analysis",
+      "keywords": ["SEED_Encrypt", "SEED_Decrypt", "SEED_KeySchedule", "SS0", "SS1", "SS2", "SS3"],
+      "severity": "info"
+    },
+    {
+      "type": "vulnerability",
+      "category": "SEED_Quantum",
+      "content": "SEED quantum vulnerability: 128-bit key provides only 64-bit security against quantum computers due to Grover's algorithm. Recommend upgrading to 256-bit symmetric cipher (AES-256, ChaCha20) for quantum resistance.",
+      "confidence": 1.0,
+      "source": "Quantum_Cryptanalysis",
+      "severity": "medium",
+      "recommendation": "Migrate to AES-256 or ChaCha20-Poly1305"
+    },
+    {
+      "type": "standard",
+      "category": "SEED_Standards",
+      "content": "SEED standards: Korean standard KS X 1213 (2000), ISO/IEC 18033-3:2010 international standard, CRYPTREC recommended cipher (Japan), IETF RFC 4269 (SEED Cipher Suites for TLS).",
+      "confidence": 1.0,
+      "source": "Standards_Bodies",
+      "severity": "info"
+    },
+    {
+      "type": "usage_context",
+      "category": "SEED_Usage",
+      "content": "SEED usage context: Korean government systems, financial institutions (banking, ATM), e-commerce platforms in Korea, SSL/TLS cipher suites (legacy). Being phased out in favor of AES and ARIA.",
+      "confidence": 0.9,
+      "source": "Industry_Practice",
+      "severity": "low"
+    },
+    {
+      "type": "detection_priority",
+      "category": "SEED_Detection",
+      "content": "SEED detection priorities: HIGH - ECB mode usage (insecure), MEDIUM - 128-bit key in long-term storage, LOW - CBC/CTR mode with proper IV. Check for key management and mode of operation.",
+      "confidence": 0.85,
+      "source": "Security_Guidelines",
+      "severity": "info"
+    }
+  ]
+}

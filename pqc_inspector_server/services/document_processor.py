@@ -283,7 +283,7 @@ class DocumentProcessor:
         # 1. 디렉토리 구조 기반 우선 분류
         # data/documents/source_code/ 형태의 경로에서 에이전트 타입 추출
         path_parts = path_obj.parts
-        valid_agents = ['source_code', 'binary', 'parameter', 'log_conf']
+        valid_agents = ['source_code', 'binary', 'log_conf']
 
         for part in path_parts:
             if part in valid_agents:
@@ -291,9 +291,7 @@ class DocumentProcessor:
                 return part
 
         # 2. 파일명 기반 분류
-        if any(keyword in filename for keyword in ['config', 'conf', 'setting']):
-            return 'parameter'
-        elif any(keyword in filename for keyword in ['log', 'audit']):
+        if any(keyword in filename for keyword in ['log', 'audit', 'config', 'conf', 'setting']):
             return 'log_conf'
         elif any(keyword in filename for keyword in ['binary', 'asm', 'disasm']):
             return 'binary'
@@ -301,13 +299,11 @@ class DocumentProcessor:
         # 3. 내용 기반 분류
         source_code_keywords = ['function', 'class', 'import', 'include', 'def ', 'public class']
         binary_keywords = ['assembly', 'disassembly', 'binary analysis', 'executable']
-        parameter_keywords = ['configuration', 'config', 'json', 'yaml', 'xml', 'settings']
-        log_keywords = ['log', 'syslog', 'audit', 'connection', 'authentication']
+        log_keywords = ['log', 'syslog', 'audit', 'connection', 'authentication', 'configuration', 'config', 'json', 'yaml', 'xml', 'settings']
 
         keyword_scores = {
             'source_code': sum(1 for kw in source_code_keywords if kw in text_lower),
             'binary': sum(1 for kw in binary_keywords if kw in text_lower),
-            'parameter': sum(1 for kw in parameter_keywords if kw in text_lower),
             'log_conf': sum(1 for kw in log_keywords if kw in text_lower)
         }
 

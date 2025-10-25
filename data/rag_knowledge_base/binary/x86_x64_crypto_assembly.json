@@ -1,0 +1,170 @@
+{
+  "signatures": [
+    {
+      "type": "assembly_instruction",
+      "category": "AES_NI_Instructions",
+      "content": "Intel AES-NI (AES New Instructions): aesenc, aesenclast, aesdec, aesdeclast, aeskeygenassist, aesimc. These instructions indicate hardware-accelerated AES encryption. AES-256 is recommended for quantum resistance.",
+      "confidence": 1.0,
+      "source": "Intel_ISA_Manual",
+      "keywords": ["aesenc", "aesenclast", "aesdec", "aesdeclast", "aeskeygenassist", "aesimc"],
+      "architectures": ["x86", "x64"],
+      "severity": "low",
+      "note": "AES is symmetric and relatively quantum-safe with 256-bit keys"
+    },
+    {
+      "type": "assembly_instruction",
+      "category": "SHA_Extensions",
+      "content": "Intel SHA Extensions: sha1rnds4, sha1nexte, sha1msg1, sha1msg2, sha256rnds2, sha256msg1, sha256msg2. SHA-1 is broken, SHA-256 is acceptable but SHA-3 preferred for long-term security.",
+      "confidence": 0.95,
+      "source": "Intel_SHA_Extensions",
+      "keywords": ["sha1rnds4", "sha1nexte", "sha1msg1", "sha1msg2", "sha256rnds2", "sha256msg1", "sha256msg2"],
+      "architectures": ["x86", "x64"],
+      "severity": "medium",
+      "note": "SHA-1 is vulnerable, upgrade to SHA-256 or SHA-3"
+    },
+    {
+      "type": "crypto_library_call",
+      "category": "OpenSSL_RSA_Assembly",
+      "content": "OpenSSL RSA assembly patterns: call RSA_public_encrypt, call RSA_private_decrypt, call RSA_sign. These function calls indicate RSA usage in compiled binaries, vulnerable to quantum computers.",
+      "confidence": 0.9,
+      "source": "OpenSSL_Binary_Analysis",
+      "keywords": ["RSA_public_encrypt", "RSA_private_decrypt", "RSA_sign", "RSA_verify", "RSA_generate_key"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_library_call",
+      "category": "OpenSSL_ECDSA_Assembly",
+      "content": "OpenSSL ECDSA assembly patterns: call ECDSA_sign, call ECDSA_verify, call EC_KEY_generate_key. ECDSA is elliptic curve-based and quantum-vulnerable.",
+      "confidence": 0.9,
+      "source": "OpenSSL_EC_Binary",
+      "keywords": ["ECDSA_sign", "ECDSA_verify", "EC_KEY_generate_key", "ECDH_compute_key"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_constant",
+      "category": "RSA_Public_Exponent",
+      "content": "RSA public exponent constant: 0x10001 (65537 in decimal). Common RSA public exponent found in .rodata or .data sections. Indicates RSA key usage.",
+      "confidence": 0.85,
+      "source": "RSA_Constants",
+      "keywords": ["0x10001", "65537", "mov.*0x10001", "push.*0x10001"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_constant",
+      "category": "ECC_Curve_Parameters",
+      "content": "Elliptic curve parameters: secp256k1, secp256r1, prime256v1 curve constants. Large prime numbers or curve coefficients in binary indicate ECC usage, quantum-vulnerable.",
+      "confidence": 0.8,
+      "source": "ECC_Constants",
+      "keywords": ["secp256k1", "secp256r1", "0xFFFFFFFF00000001", "prime256v1"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "assembly_pattern",
+      "category": "Modular_Exponentiation",
+      "content": "Modular exponentiation patterns: repeated mul, imul with div, idiv operations in loops. Classic signature of RSA/DH implementations doing g^x mod p calculations.",
+      "confidence": 0.75,
+      "source": "Crypto_Algorithm_Patterns",
+      "keywords": ["mul.*div", "imul.*idiv", "shl.*shr.*xor.*loop"],
+      "architectures": ["x86", "x64"],
+      "severity": "high",
+      "note": "Indicates probable RSA/DH implementation"
+    },
+    {
+      "type": "assembly_pattern",
+      "category": "Point_Multiplication_ECC",
+      "content": "ECC point multiplication patterns: Double-and-add algorithm with field arithmetic. Nested loops with add, sub, mul operations on coordinates indicate elliptic curve crypto.",
+      "confidence": 0.7,
+      "source": "ECC_Implementation",
+      "keywords": ["addsubmul pattern", "jacobian coordinates", "montgomery ladder"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "windows_crypto_api",
+      "category": "CryptoAPI_Calls",
+      "content": "Windows CryptoAPI calls: CryptGenKey, CryptEncrypt, CryptDecrypt, CryptSignHash, CryptVerifySignature. Legacy Windows crypto functions often use RSA/RC4.",
+      "confidence": 0.9,
+      "source": "Windows_CryptoAPI",
+      "keywords": ["CryptGenKey", "CryptEncrypt", "CryptDecrypt", "CryptSignHash", "CryptVerifySignature"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "windows_crypto_api",
+      "category": "BCrypt_CNG_Calls",
+      "content": "Windows CNG (Cryptography Next Generation): BCryptGenerateKeyPair, BCryptEncrypt, BCryptDecrypt. Modern Windows crypto API supporting RSA, ECDSA, ECDH.",
+      "confidence": 0.85,
+      "source": "Windows_CNG",
+      "keywords": ["BCryptGenerateKeyPair", "BCryptEncrypt", "BCryptDecrypt", "BCryptSignHash"],
+      "architectures": ["x86", "x64"],
+      "severity": "high"
+    },
+    {
+      "type": "register_pattern",
+      "category": "Crypto_Register_Usage",
+      "content": "Cryptographic register patterns: Heavy use of xmm0-xmm15 (SSE/AVX) for parallel crypto operations. movdqa, pxor, pshufb indicate AES or ChaCha20 implementations.",
+      "confidence": 0.7,
+      "source": "SIMD_Crypto",
+      "keywords": ["xmm", "ymm", "movdqa", "pxor", "pshufb", "vpxor"],
+      "architectures": ["x64"],
+      "severity": "low",
+      "note": "Usually symmetric crypto (AES, ChaCha20)"
+    },
+    {
+      "type": "crypto_library_call",
+      "category": "mbedTLS_Functions",
+      "content": "mbedTLS crypto functions: mbedtls_rsa_public, mbedtls_ecdsa_sign, mbedtls_dhm_make_params. Embedded crypto library calls in binary.",
+      "confidence": 0.85,
+      "source": "mbedTLS_Binary",
+      "keywords": ["mbedtls_rsa", "mbedtls_ecdsa", "mbedtls_dhm", "mbedtls_ecp"],
+      "architectures": ["x86", "x64", "arm"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_library_call",
+      "category": "WolfSSL_Functions",
+      "content": "wolfSSL crypto functions: wc_RsaPublicEncrypt, wc_ecc_sign_hash, wc_DhGenerateKeyPair. wolfSSL is popular in embedded/IoT devices.",
+      "confidence": 0.85,
+      "source": "WolfSSL_Binary",
+      "keywords": ["wc_RsaPublicEncrypt", "wc_ecc_sign_hash", "wc_DhGenerateKeyPair"],
+      "architectures": ["x86", "x64", "arm"],
+      "severity": "high"
+    },
+    {
+      "type": "string_constant",
+      "category": "Crypto_String_Identifiers",
+      "content": "Cryptographic string constants: 'RSA', 'ECDSA', 'secp256k1', 'prime256v1', 'AES-256-GCM' in .rodata section. String references indicate algorithm selection.",
+      "confidence": 0.8,
+      "source": "String_Analysis",
+      "keywords": ["RSA", "ECDSA", "ECDH", "secp256k1", "prime256v1", "AES-256"],
+      "architectures": ["all"],
+      "severity": "medium"
+    },
+    {
+      "type": "assembly_pattern",
+      "category": "Key_Derivation_PBKDF2",
+      "content": "PBKDF2 implementation patterns: Nested HMAC loops with iteration counter. Recognizable by repeated SHA/HMAC calls with salt mixing.",
+      "confidence": 0.75,
+      "source": "KDF_Implementation",
+      "keywords": ["hmac loop", "iteration counter", "salt xor"],
+      "architectures": ["x86", "x64"],
+      "severity": "low",
+      "note": "Check iteration count (should be ≥ 600000)"
+    },
+    {
+      "type": "assembly_instruction",
+      "category": "RDRAND_RNG",
+      "content": "Intel RDRAND/RDSEED instructions: rdrand rax, rdseed rcx. Hardware random number generation. Secure for cryptographic use but verify proper error handling.",
+      "confidence": 0.9,
+      "source": "Intel_RNG",
+      "keywords": ["rdrand", "rdseed"],
+      "architectures": ["x64"],
+      "severity": "safe",
+      "note": "Hardware RNG is cryptographically secure"
+    }
+  ]
+}

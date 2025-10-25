@@ -1,0 +1,104 @@
+{
+  "patterns": [
+    {
+      "type": "crypto_pattern",
+      "category": "Java_RSA",
+      "content": "Java RSA key generation pattern: KeyPairGenerator.getInstance(\"RSA\"); kpg.initialize(2048); KeyPair kp = kpg.generateKeyPair(). RSA is vulnerable to quantum computers and can be broken in polynomial time using Shor's Algorithm.",
+      "confidence": 1.0,
+      "source": "Java_Cryptography_Architecture",
+      "keywords": ["KeyPairGenerator.getInstance(\"RSA\")", "RSA", "generateKeyPair", "java.security.KeyPairGenerator"],
+      "file_extensions": [".java", ".class"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "Java_ECDSA",
+      "content": "Java ECDSA signature pattern: KeyPairGenerator.getInstance(\"EC\"); Signature.getInstance(\"SHA256withECDSA\"). ECDSA is an elliptic curve-based digital signature vulnerable to quantum computers.",
+      "confidence": 0.95,
+      "source": "Java_EC_Crypto",
+      "keywords": ["KeyPairGenerator.getInstance(\"EC\")", "SHA256withECDSA", "SHA384withECDSA", "ECDSA"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "Java_DH",
+      "content": "Java Diffie-Hellman key exchange: KeyPairGenerator.getInstance(\"DH\"); KeyAgreement.getInstance(\"DH\"). DH key exchange is based on the discrete logarithm problem and vulnerable to quantum computers.",
+      "confidence": 1.0,
+      "source": "Java_KeyAgreement",
+      "keywords": ["KeyPairGenerator.getInstance(\"DH\")", "KeyAgreement.getInstance(\"DH\")", "DHParameterSpec"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "Java_DSA",
+      "content": "Java DSA signature pattern: KeyPairGenerator.getInstance(\"DSA\"); Signature.getInstance(\"SHA1withDSA\"). DSA is a digital signature algorithm vulnerable to quantum computers.",
+      "confidence": 1.0,
+      "source": "Java_DSA",
+      "keywords": ["KeyPairGenerator.getInstance(\"DSA\")", "SHA1withDSA", "SHA256withDSA"],
+      "file_extensions": [".java"],
+      "severity": "critical"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "BouncyCastle_RSA",
+      "content": "BouncyCastle RSA usage: org.bouncycastle.crypto.generators.RSAKeyPairGenerator; RSAKeyGenerationParameters. BouncyCastle library's RSA implementation is also quantum-vulnerable.",
+      "confidence": 0.95,
+      "source": "BouncyCastle_Library",
+      "keywords": ["org.bouncycastle.crypto.generators.RSAKeyPairGenerator", "RSAKeyGenerationParameters", "RSAEngine"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "JCE_Cipher_RSA",
+      "content": "JCE Cipher RSA encryption: Cipher.getInstance(\"RSA/ECB/PKCS1Padding\"); Cipher.getInstance(\"RSA/NONE/OAEPPadding\"). RSA encryption is vulnerable to quantum computers.",
+      "confidence": 1.0,
+      "source": "JCE_Provider",
+      "keywords": ["Cipher.getInstance(\"RSA", "RSA/ECB", "RSA/NONE", "PKCS1Padding", "OAEPPadding"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    },
+    {
+      "type": "crypto_pattern",
+      "category": "Java_ECDH",
+      "content": "Java ECDH key exchange: KeyAgreement.getInstance(\"ECDH\"); ECGenParameterSpec(\"secp256r1\"). ECDH is elliptic curve Diffie-Hellman and quantum-vulnerable.",
+      "confidence": 0.95,
+      "source": "Java_ECDH",
+      "keywords": ["KeyAgreement.getInstance(\"ECDH\")", "ECDH", "ECGenParameterSpec", "secp256r1", "prime256v1"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    },
+    {
+      "type": "library_pattern",
+      "category": "Deprecated_Crypto",
+      "content": "Legacy cryptography libraries: import com.sun.crypto.provider.RSACipher; import sun.security.rsa.*. These are outdated implementations with security risks.",
+      "confidence": 0.8,
+      "source": "Legacy_Java",
+      "keywords": ["com.sun.crypto.provider", "sun.security.rsa", "sun.security.ec"],
+      "file_extensions": [".java"],
+      "severity": "medium"
+    },
+    {
+      "type": "safe_pattern",
+      "category": "AES_Symmetric",
+      "content": "Java AES symmetric encryption: Cipher.getInstance(\"AES/GCM/NoPadding\"). AES is a symmetric cipher relatively safe against quantum computers, but 256-bit keys are recommended.",
+      "confidence": 0.7,
+      "source": "Java_AES",
+      "keywords": ["Cipher.getInstance(\"AES", "AES/GCM", "AES/CBC", "AES/CTR"],
+      "file_extensions": [".java"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "KeyStore_RSA",
+      "content": "Java KeyStore RSA keys: KeyStore.getInstance(\"JKS\"); keyStore.setKeyEntry(alias, privateKey, ...). RSA keys stored in KeyStore are also quantum-vulnerable.",
+      "confidence": 0.85,
+      "source": "Java_KeyStore",
+      "keywords": ["KeyStore.getInstance", "setKeyEntry", "getPrivateKey", "PrivateKey"],
+      "file_extensions": [".java"],
+      "severity": "high"
+    }
+  ]
+}

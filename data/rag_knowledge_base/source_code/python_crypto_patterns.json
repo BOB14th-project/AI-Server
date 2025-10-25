@@ -3,7 +3,7 @@
     {
       "type": "crypto_pattern",
       "category": "RSA_pycryptodome",
-      "content": "pycryptodome 라이브러리의 RSA 키 생성 패턴: from Crypto.PublicKey import RSA; key = RSA.generate(2048). 이는 2048비트 RSA 키를 생성하며, 양자 컴퓨터 공격에 취약합니다. CRYSTALS-Kyber로 교체 권장.",
+      "content": "RSA key generation in pycryptodome library: from Crypto.PublicKey import RSA; key = RSA.generate(2048). This generates a 2048-bit RSA key, which is vulnerable to quantum computer attacks using Shor's Algorithm. Recommend replacing with CRYSTALS-Kyber.",
       "confidence": 0.95,
       "source": "pycryptodome_documentation_2024",
       "keywords": ["RSA.generate", "Crypto.PublicKey", "pycryptodome", "2048", "4096"],
@@ -13,7 +13,7 @@
     {
       "type": "crypto_pattern",
       "category": "ECDSA_cryptography",
-      "content": "cryptography 라이브러리의 ECDSA 구현: from cryptography.hazmat.primitives.asymmetric import ec; private_key = ec.generate_private_key(ec.SECP256R1()). SECP256R1 곡선은 양자 컴퓨터에 취약하므로 Ed25519나 향후 양자내성 서명으로 교체 필요.",
+      "content": "ECDSA implementation in cryptography library: from cryptography.hazmat.primitives.asymmetric import ec; private_key = ec.generate_private_key(ec.SECP256R1()). The SECP256R1 curve is vulnerable to quantum computers, requiring replacement with Ed25519 or future quantum-resistant signatures.",
       "confidence": 0.9,
       "source": "cryptography_library_analysis",
       "keywords": ["ec.generate_private_key", "SECP256R1", "SECP384R1", "cryptography.hazmat"],
@@ -23,7 +23,7 @@
     {
       "type": "safe_pattern",
       "category": "Ed25519",
-      "content": "Ed25519 서명 알고리즘: from cryptography.hazmat.primitives.asymmetric import ed25519; private_key = ed25519.Ed25519PrivateKey.generate(). Ed25519는 현재 권장되는 서명 알고리즘이지만, 양자 컴퓨터에는 여전히 취약합니다.",
+      "content": "Ed25519 signature algorithm: from cryptography.hazmat.primitives.asymmetric import ed25519; private_key = ed25519.Ed25519PrivateKey.generate(). Ed25519 is currently recommended but still vulnerable to quantum computers.",
       "confidence": 0.8,
       "source": "Ed25519_analysis",
       "keywords": ["Ed25519PrivateKey", "ed25519", "EdDSA"],
@@ -33,7 +33,7 @@
     {
       "type": "crypto_pattern",
       "category": "RSA_legacy",
-      "content": "레거시 RSA 사용 패턴: import rsa; (public_key, private_key) = rsa.newkeys(1024). 1024비트 RSA는 매우 약하며, 현재도 고전 컴퓨터로 공격 가능합니다. 즉시 교체 필요.",
+      "content": "Legacy RSA usage pattern: import rsa; (public_key, private_key) = rsa.newkeys(1024). 1024-bit RSA is very weak and can be attacked even by classical computers. Requires immediate replacement.",
       "confidence": 1.0,
       "source": "RSA_security_analysis",
       "keywords": ["rsa.newkeys", "1024", "512"],
@@ -43,12 +43,22 @@
     {
       "type": "safe_pattern",
       "category": "Kyber_implementation",
-      "content": "CRYSTALS-Kyber 키 캡슐화: from kyber import Kyber768; kyber = Kyber768(); public_key, secret_key = kyber.keygen(). Kyber는 NIST 표준 양자내성 키 캡슐화 메커니즘입니다.",
+      "content": "CRYSTALS-Kyber key encapsulation: from kyber import Kyber768; kyber = Kyber768(); public_key, secret_key = kyber.keygen(). Kyber is a NIST-standardized quantum-resistant key encapsulation mechanism.",
       "confidence": 1.0,
       "source": "NIST_PQC_standards",
       "keywords": ["Kyber512", "Kyber768", "Kyber1024", "keygen", "encaps"],
       "file_extensions": [".py", ".c", ".cpp"],
       "severity": "safe"
+    },
+    {
+      "type": "library_pattern",
+      "category": "Python_Crypto_Libraries",
+      "content": "Python cryptography libraries: pycryptodome, cryptography, pyOpenSSL, ecdsa, rsa. When importing these libraries, there's a high likelihood of using non-quantum-resistant cryptography.",
+      "confidence": 0.8,
+      "source": "library_analysis",
+      "keywords": ["import cryptography", "from Crypto", "import ecdsa", "import rsa"],
+      "file_extensions": [".py"],
+      "severity": "medium"
     }
   ]
 }

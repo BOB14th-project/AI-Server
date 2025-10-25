@@ -1,0 +1,385 @@
+{
+  "algorithms": ["ECDSA", "ECDH"],
+  "type": "elliptic_curve_cryptography",
+  "quantum_vulnerable": true,
+  "shor_algorithm_impact": "Solves discrete logarithm problem on elliptic curves in polynomial time, completely breaking ECC",
+  "detailed_structure": [
+    {
+      "component": "Elliptic_Curve_Mathematics",
+      "curve_equation": "y² = x³ + ax + b (mod p) for prime field Fp",
+      "fundamental_operations": [
+        {
+          "operation": "Point_Addition",
+          "formula": "P + Q = R where P=(x₁,y₁), Q=(x₂,y₂), R=(x₃,y₃)",
+          "algorithm": [
+            "If P = ∞: return Q",
+            "If Q = ∞: return P",
+            "If x₁ = x₂ and y₁ = -y₂: return ∞ (point at infinity)",
+            "If P = Q: use point doubling formula",
+            "Else:",
+            "  λ = (y₂ - y₁) / (x₂ - x₁) mod p",
+            "  x₃ = λ² - x₁ - x₂ mod p",
+            "  y₃ = λ(x₁ - x₃) - y₁ mod p"
+          ],
+          "code_patterns": [
+            "Modular subtraction: (y₂ - y₁) mod p",
+            "Modular inverse: (x₂ - x₁)⁻¹ mod p using Extended GCD or Fermat",
+            "Modular multiplication and squaring",
+            "Special case handling: infinity point, equal points",
+            "Coordinate storage: (x, y) pairs or projective (X, Y, Z)"
+          ]
+        },
+        {
+          "operation": "Point_Doubling",
+          "formula": "2P = R where P=(x₁,y₁), R=(x₃,y₃)",
+          "algorithm": [
+            "If y₁ = 0: return ∞",
+            "λ = (3x₁² + a) / (2y₁) mod p",
+            "x₃ = λ² - 2x₁ mod p",
+            "y₃ = λ(x₁ - x₃) - y₁ mod p"
+          ],
+          "code_patterns": [
+            "Squaring x₁ and multiplying by 3",
+            "Adding curve parameter a",
+            "Doubling y₁",
+            "Modular inverse of 2y₁",
+            "Similar to point addition but different slope calculation"
+          ]
+        },
+        {
+          "operation": "Scalar_Multiplication",
+          "formula": "k·P = P + P + ... + P (k times)",
+          "algorithms": [
+            {
+              "name": "Double-and-Add",
+              "pseudocode": [
+                "Q = ∞",
+                "for each bit i in k (from MSB to LSB):",
+                "  Q = 2Q  // point doubling",
+                "  if bit[i] == 1:",
+                "    Q = Q + P  // point addition",
+                "return Q"
+              ],
+              "detection": "Loop with doubling every iteration, conditional addition"
+            },
+            {
+              "name": "Montgomery_Ladder",
+              "pseudocode": [
+                "R0 = ∞, R1 = P",
+                "for each bit i in k (from MSB to LSB):",
+                "  if bit[i] == 0:",
+                "    R1 = R0 + R1",
+                "    R0 = 2R0",
+                "  else:",
+                "    R0 = R0 + R1",
+                "    R1 = 2R1",
+                "return R0"
+              ],
+              "detection": "Constant-time execution, always one doubling and one addition per bit",
+              "security": "Resistant to timing side-channel attacks"
+            }
+          ],
+          "code_patterns": [
+            "Bit iteration over scalar k (256-521 bits)",
+            "Point doubling calls",
+            "Conditional point addition",
+            "Two-point state (R0, R1) for Montgomery ladder",
+            "Constant-time conditional swaps"
+          ]
+        }
+      ]
+    },
+    {
+      "component": "Common_Elliptic_Curves",
+      "curves": [
+        {
+          "name": "secp256k1",
+          "usage": "Bitcoin, Ethereum, cryptocurrency",
+          "parameters": {
+            "prime_p": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F (2²⁵⁶ - 2³² - 977)",
+            "curve_a": "0",
+            "curve_b": "7",
+            "generator_Gx": "0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798",
+            "generator_Gy": "0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8",
+            "order_n": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
+            "cofactor": "1"
+          },
+          "detection_indicators": [
+            "Prime p = 2²⁵⁶ - 2³² - 977 (specific pattern)",
+            "Curve parameter b = 7 (very simple)",
+            "Generator G coordinates (fixed values)",
+            "256-bit field arithmetic",
+            "Koblitz curve (efficiently computable endomorphism)"
+          ]
+        },
+        {
+          "name": "secp256r1 (P-256, prime256v1)",
+          "usage": "TLS, SSH, JWT, government systems, NIST standard",
+          "parameters": {
+            "prime_p": "0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF (2²⁵⁶ - 2²²⁴ + 2¹⁹² + 2⁹⁶ - 1)",
+            "curve_a": "0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC (p - 3)",
+            "curve_b": "0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B",
+            "generator_Gx": "0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296",
+            "generator_Gy": "0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5",
+            "order_n": "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
+          },
+          "detection_indicators": [
+            "NIST P-256 prime (2²⁵⁶ - 2²²⁴ + ...)",
+            "Curve parameter a = p - 3 (optimization)",
+            "NIST standardized generator point",
+            "Very common in TLS cipher suites"
+          ]
+        },
+        {
+          "name": "secp384r1 (P-384)",
+          "usage": "High-security TLS, government (Suite B)",
+          "parameters": {
+            "prime_p": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF (2³⁸⁴ - 2¹²⁸ - 2⁹⁶ + 2³² - 1)",
+            "field_size": "384 bits",
+            "security_level": "~192 bits classical, ~96 bits quantum"
+          },
+          "detection_indicators": [
+            "384-bit field operations",
+            "NIST P-384 prime pattern",
+            "Suite B cryptography usage"
+          ]
+        },
+        {
+          "name": "Curve25519",
+          "usage": "Modern protocols (TLS 1.3, SSH, Signal, WhatsApp)",
+          "parameters": {
+            "prime_p": "2²⁵⁵ - 19",
+            "curve_equation": "y² = x³ + 486662x² + x (Montgomery form)",
+            "field_size": "255 bits",
+            "base_point": "x = 9"
+          },
+          "detection_indicators": [
+            "Prime 2²⁵⁵ - 19 (Mersenne-like)",
+            "Montgomery curve (different equation form)",
+            "x-coordinate only operations (faster)",
+            "Base point x = 9 (simple)",
+            "Constant-time by design"
+          ]
+        }
+      ]
+    },
+    {
+      "component": "ECDSA_Signature_Generation",
+      "mathematical_operations": [
+        "1. Hash message: e = Hash(m) using SHA-256/SHA-512",
+        "2. Truncate e to bit length of curve order n",
+        "3. Generate random nonce k ∈ [1, n-1] (CRITICAL: must be random and unique)",
+        "4. Compute point: (x₁, y₁) = k·G",
+        "5. Compute r = x₁ mod n (if r = 0, restart with new k)",
+        "6. Compute s = k⁻¹(e + r·dₐ) mod n where dₐ is private key",
+        "7. If s = 0, restart with new k",
+        "8. Output signature: (r, s)"
+      ],
+      "code_patterns": {
+        "source_code": [
+          "Message hashing (SHA-256, SHA-384, SHA-512, SHA3)",
+          "Random nonce generation (CSPRNG): /dev/urandom, CryptGenRandom, getrandom()",
+          "Scalar multiplication: k·G using double-and-add or Montgomery ladder",
+          "Modular inverse: k⁻¹ mod n using Extended GCD",
+          "Modular arithmetic: (e + r·dₐ) mod n",
+          "Signature encoding: DER format or raw (r, s)"
+        ],
+        "assembly": [
+          "Hash computation loops (SHA rounds)",
+          "RNG calls for nonce k",
+          "Elliptic curve point multiplication (k·G)",
+          "Modular inverse computation (Extended GCD or Fermat)",
+          "Modular multiplication: r·dₐ, k⁻¹·(...)",
+          "Zero checks for r and s"
+        ],
+        "security_critical": [
+          "Nonce k MUST be random and never reused",
+          "If same k used twice with different messages → private key leaked",
+          "PlayStation 3 hack: Sony reused k, private key recovered",
+          "Deterministic ECDSA (RFC 6979): k = HMAC-SHA256(private_key, message)"
+        ]
+      },
+      "detection_indicators": [
+        "Random nonce generation (critical indicator)",
+        "Scalar multiplication k·G",
+        "Modular inverse k⁻¹",
+        "Signature format: (r, s) pair, each 256-521 bits",
+        "Private key usage (dₐ) in signature computation"
+      ]
+    },
+    {
+      "component": "ECDSA_Signature_Verification",
+      "mathematical_operations": [
+        "1. Verify r, s ∈ [1, n-1]",
+        "2. Hash message: e = Hash(m)",
+        "3. Compute w = s⁻¹ mod n",
+        "4. Compute u₁ = e·w mod n",
+        "5. Compute u₂ = r·w mod n",
+        "6. Compute point: (x₁, y₁) = u₁·G + u₂·Qₐ where Qₐ is public key",
+        "7. If (x₁, y₁) = ∞, reject signature",
+        "8. Verify: r ≡ x₁ (mod n)",
+        "9. Return valid/invalid"
+      ],
+      "code_patterns": {
+        "source_code": [
+          "Range check: r, s in [1, n-1]",
+          "Message hashing (same algorithm as signing)",
+          "Modular inverse: s⁻¹ mod n",
+          "Two scalar multiplications: u₁·G and u₂·Qₐ",
+          "Point addition: u₁·G + u₂·Qₐ",
+          "Coordinate comparison: x₁ ?= r",
+          "Public key usage (no private key)"
+        ],
+        "assembly": [
+          "Two independent scalar multiplications (can be parallelized)",
+          "Point addition operation",
+          "Modular comparison: x₁ mod n vs r",
+          "Infinity point check",
+          "Boolean return value"
+        ],
+        "optimization": [
+          "Shamir's trick: compute u₁·G + u₂·Qₐ efficiently in one operation",
+          "Precomputed multiples of G (fixed base)",
+          "Sliding window or NAF (Non-Adjacent Form) for scalar multiplication"
+        ]
+      },
+      "detection_indicators": [
+        "Two scalar multiplications",
+        "Point addition of results",
+        "Modular inverse s⁻¹",
+        "Public key Qₐ usage",
+        "No private key operations",
+        "Signature validation logic"
+      ]
+    },
+    {
+      "component": "ECDH_Key_Exchange",
+      "mathematical_operations": [
+        "1. Alice generates private key: dₐ ∈ [1, n-1]",
+        "2. Alice computes public key: Qₐ = dₐ·G",
+        "3. Bob generates private key: dᵦ ∈ [1, n-1]",
+        "4. Bob computes public key: Qᵦ = dᵦ·G",
+        "5. Alice and Bob exchange public keys Qₐ, Qᵦ",
+        "6. Alice computes shared secret: S = dₐ·Qᵦ = dₐ·dᵦ·G",
+        "7. Bob computes shared secret: S = dᵦ·Qₐ = dₐ·dᵦ·G",
+        "8. Both derive symmetric key: K = KDF(S) using HKDF, PBKDF2, or SHA-256"
+      ],
+      "code_patterns": {
+        "source_code": [
+          "Private key generation: random scalar dₐ, dᵦ",
+          "Public key computation: scalar multiplication d·G",
+          "Shared secret computation: dₐ·Qᵦ (scalar mult with received public key)",
+          "Key derivation function: KDF, HKDF, or simple hash",
+          "No signature operations (only key exchange)",
+          "Point validation: check Qᵦ is on curve and not infinity"
+        ],
+        "assembly": [
+          "Two scalar multiplications per party",
+          "Point validation checks",
+          "KDF/hash computation",
+          "Shared secret point extraction (usually x-coordinate)",
+          "Memory clearing for private keys"
+        ],
+        "security": [
+          "Public key validation: must verify received Q is valid curve point",
+          "Invalid curve attack: attacker sends point not on curve",
+          "Small subgroup attack: Q has small order",
+          "Twist attack: point on quadratic twist of curve"
+        ]
+      },
+      "detection_indicators": [
+        "Two scalar multiplications (one for public key, one for shared secret)",
+        "Key derivation function after ECDH",
+        "Public key exchange (network transmission or IPC)",
+        "No signature operations",
+        "Point validation code"
+      ]
+    },
+    {
+      "component": "Coordinate_Systems",
+      "systems": [
+        {
+          "name": "Affine_Coordinates",
+          "representation": "(x, y) where y² = x³ + ax + b",
+          "advantages": "Simple, small storage (2 elements)",
+          "disadvantages": "Requires modular inverse for point addition (slow)",
+          "usage": "Final results, serialization"
+        },
+        {
+          "name": "Projective_Coordinates",
+          "representation": "(X, Y, Z) where x = X/Z, y = Y/Z",
+          "curve_equation": "Y²Z = X³ + aXZ² + bZ³",
+          "advantages": "No modular inverse during operations (faster)",
+          "disadvantages": "3 elements, conversion needed at end",
+          "usage": "Internal computations"
+        },
+        {
+          "name": "Jacobian_Coordinates",
+          "representation": "(X, Y, Z) where x = X/Z², y = Y/Z³",
+          "curve_equation": "Y² = X³ + aXZ⁴ + bZ⁶",
+          "advantages": "More efficient point doubling than projective",
+          "disadvantages": "3 elements, more complex formulas",
+          "usage": "Optimized implementations (OpenSSL, mbedTLS)"
+        },
+        {
+          "name": "Montgomery_Coordinates",
+          "representation": "x-coordinate only (for Montgomery curves like Curve25519)",
+          "advantages": "Simplest, fastest, constant-time ladder",
+          "disadvantages": "Limited to Montgomery curves, x-only",
+          "usage": "Curve25519, X25519 key exchange"
+        }
+      ],
+      "detection": "Check if implementation uses 2 or 3 coordinates per point, final conversion to affine"
+    },
+    {
+      "component": "Common_Constants",
+      "constants": [
+        {"value": "secp256k1 p", "hex": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"},
+        {"value": "secp256k1 n", "hex": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"},
+        {"value": "secp256r1 p", "hex": "0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF"},
+        {"value": "Curve25519 p", "hex": "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed (2²⁵⁵ - 19)"},
+        {"value": "Generator G x", "note": "Curve-specific, fixed coordinates"},
+        {"value": "Curve parameters a, b", "note": "Define elliptic curve equation"}
+      ]
+    },
+    {
+      "component": "Attack_Vulnerabilities",
+      "quantum_attacks": {
+        "shor_algorithm": "Solves Elliptic Curve Discrete Logarithm Problem (ECDLP) in polynomial time O((log n)³)",
+        "impact": "All ECC key sizes (256-521 bits) broken with quantum computer",
+        "timeline": "Similar to RSA, estimated 10-30 years",
+        "note": "ECC offers no advantage over RSA against quantum attacks, both equally broken"
+      },
+      "classical_attacks": [
+        "Nonce reuse attack: if k reused, private key = (s₁-s₂)/(e₁-e₂)·r⁻¹",
+        "Biased nonce: if k has bias (e.g., few bits), lattice attack recovers private key",
+        "Invalid curve attack: attacker sends point on different curve with weak DLP",
+        "Timing attacks: measure scalar multiplication time to extract bits of scalar",
+        "Side-channel: power analysis, cache timing",
+        "Pollard's rho: O(√n) generic discrete log attack (slow for 256-bit curves)"
+      ]
+    },
+    {
+      "component": "Detection_Summary",
+      "high_confidence_indicators": [
+        "Elliptic curve point operations: addition, doubling",
+        "Scalar multiplication with 256-521 bit scalars",
+        "Modular arithmetic modulo curve prime p",
+        "Curve parameters: a, b, p, n, G",
+        "ECDSA: random nonce k, signature (r, s), modular inverse k⁻¹",
+        "ECDH: two scalar multiplications, KDF",
+        "Specific curve constants: secp256k1, P-256, Curve25519",
+        "Point validation code"
+      ],
+      "code_structure_indicators": [
+        "Point structure: (x, y) or (X, Y, Z)",
+        "Scalar multiplication loop (double-and-add or Montgomery ladder)",
+        "Modular inverse implementation (Extended GCD or Fermat)",
+        "Coordinate system conversions (affine ↔ projective/Jacobian)",
+        "Public/private key pair structures",
+        "Signature generation: hash, nonce, scalar mult, modular ops",
+        "Signature verification: two scalar mults, point addition"
+      ]
+    }
+  ]
+}

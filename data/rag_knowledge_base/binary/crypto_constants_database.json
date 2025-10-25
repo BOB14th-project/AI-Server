@@ -1,0 +1,293 @@
+{
+  "description": "Cryptographic magic numbers and constants for detecting algorithms in binary without function names",
+  "constants": [
+    {
+      "type": "constant",
+      "category": "RSA_Public_Exponent",
+      "algorithm": "RSA",
+      "values": [
+        {"hex": "0x00010001", "decimal": 65537, "description": "Most common RSA public exponent e"},
+        {"hex": "0x03", "decimal": 3, "description": "Small public exponent (less common, faster but less secure)"},
+        {"hex": "0x11", "decimal": 17, "description": "Alternative small public exponent"}
+      ],
+      "detection_context": "These values appear as constants in RSA key generation or encryption code. Finding 65537 (0x10001) is a strong indicator of RSA implementation.",
+      "confidence": 0.95,
+      "quantum_vulnerable": true,
+      "severity": "critical"
+    },
+    {
+      "type": "constant",
+      "category": "SHA256_Initial_Hash",
+      "algorithm": "SHA-256",
+      "values": [
+        {"hex": "0x6a09e667", "description": "H0 - first 32 bits of fractional parts of sqrt(2)"},
+        {"hex": "0xbb67ae85", "description": "H1 - sqrt(3)"},
+        {"hex": "0x3c6ef372", "description": "H2 - sqrt(5)"},
+        {"hex": "0xa54ff53a", "description": "H3 - sqrt(7)"},
+        {"hex": "0x510e527f", "description": "H4 - sqrt(11)"},
+        {"hex": "0x9b05688c", "description": "H5 - sqrt(13)"},
+        {"hex": "0x1f83d9ab", "description": "H6 - sqrt(17)"},
+        {"hex": "0x5be0cd19", "description": "H7 - sqrt(19)"}
+      ],
+      "detection_context": "SHA-256 initial hash values. Finding 2+ of these constants in sequence strongly indicates SHA-256 implementation.",
+      "confidence": 0.98,
+      "quantum_vulnerable": false,
+      "severity": "low"
+    },
+    {
+      "type": "constant",
+      "category": "SHA256_Round_Constants",
+      "algorithm": "SHA-256",
+      "values": [
+        {"hex": "0x428a2f98", "description": "K[0] - first 32 bits of cube root of 2"},
+        {"hex": "0x71374491", "description": "K[1] - cbrt(3)"},
+        {"hex": "0xb5c0fbcf", "description": "K[2] - cbrt(5)"},
+        {"hex": "0xe9b5dba5", "description": "K[3] - cbrt(7)"},
+        {"hex": "0x3956c25b", "description": "K[4] - cbrt(11)"},
+        {"hex": "0x59f111f1", "description": "K[5] - cbrt(13)"}
+      ],
+      "detection_context": "SHA-256 uses 64 round constants derived from cube roots of first 64 primes. Finding several of these indicates SHA-256.",
+      "confidence": 0.95,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "note": "Full array of 64 constants available in specification"
+    },
+    {
+      "type": "constant",
+      "category": "AES_S-Box",
+      "algorithm": "AES",
+      "values": [
+        {"hex": "0x63", "position": 0, "description": "First S-box entry"},
+        {"hex": "0x7c", "position": 1, "description": "Second S-box entry"},
+        {"hex": "0x77", "position": 2, "description": "Third S-box entry"},
+        {"hex": "0x7b", "position": 3, "description": "Fourth S-box entry"},
+        {"hex": "0x16", "position": 255, "description": "Last S-box entry"}
+      ],
+      "detection_context": "AES S-box is a 256-byte lookup table. Finding this specific sequence [63 7C 77 7B F2 6B 6F C5...] indicates AES implementation.",
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low"
+    },
+    {
+      "type": "constant",
+      "category": "AES_Rcon",
+      "algorithm": "AES",
+      "values": [
+        {"hex": "0x01", "round": 1, "description": "Round constant for round 1"},
+        {"hex": "0x02", "round": 2, "description": "Powers of 2 in GF(2^8)"},
+        {"hex": "0x04", "round": 3},
+        {"hex": "0x08", "round": 4},
+        {"hex": "0x10", "round": 5},
+        {"hex": "0x20", "round": 6},
+        {"hex": "0x40", "round": 7},
+        {"hex": "0x80", "round": 8},
+        {"hex": "0x1b", "round": 9, "description": "x^8 reduced by x^4+x^3+x+1"},
+        {"hex": "0x36", "round": 10}
+      ],
+      "detection_context": "AES key schedule round constants. Sequential doubling in GF(2^8) with reduction polynomial 0x11B.",
+      "confidence": 0.9,
+      "quantum_vulnerable": false,
+      "severity": "low"
+    },
+    {
+      "type": "constant",
+      "category": "secp256k1_Parameters",
+      "algorithm": "ECDSA_secp256k1",
+      "values": [
+        {"hex": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", "description": "Prime p for Bitcoin curve"},
+        {"hex": "0x0000000000000000000000000000000000000000000000000000000000000007", "description": "Curve parameter b (y²=x³+7)"},
+        {"hex": "0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", "description": "Generator point G x-coordinate"},
+        {"hex": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", "description": "Curve order n"}
+      ],
+      "detection_context": "secp256k1 elliptic curve parameters (used in Bitcoin). Finding prime p or generator G indicates ECDSA with this curve.",
+      "confidence": 0.98,
+      "quantum_vulnerable": true,
+      "severity": "critical"
+    },
+    {
+      "type": "constant",
+      "category": "secp256r1_P256_Parameters",
+      "algorithm": "ECDSA_P256",
+      "values": [
+        {"hex": "0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", "description": "NIST P-256 prime p"},
+        {"hex": "0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", "description": "Generator G x-coordinate"},
+        {"hex": "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", "description": "Curve order n"}
+      ],
+      "detection_context": "NIST P-256 (secp256r1) curve parameters. Widely used in TLS, JWT, government systems.",
+      "confidence": 0.98,
+      "quantum_vulnerable": true,
+      "severity": "critical"
+    },
+    {
+      "type": "constant",
+      "category": "DH_MODP_Group14",
+      "algorithm": "Diffie-Hellman",
+      "values": [
+        {"hex": "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74...", "description": "2048-bit MODP prime (RFC 3526 Group 14)", "bits": 2048},
+        {"hex": "0x02", "description": "Generator g (common value)"}
+      ],
+      "detection_context": "RFC 3526 Diffie-Hellman Group 14 (2048-bit MODP). Finding this specific 2048-bit prime indicates DH key exchange.",
+      "confidence": 0.95,
+      "quantum_vulnerable": true,
+      "severity": "critical"
+    },
+    {
+      "type": "constant",
+      "category": "MD5_Initial_Hash",
+      "algorithm": "MD5",
+      "values": [
+        {"hex": "0x67452301", "description": "A - MD5 magic constant"},
+        {"hex": "0xefcdab89", "description": "B"},
+        {"hex": "0x98badcfe", "description": "C"},
+        {"hex": "0x10325476", "description": "D"}
+      ],
+      "detection_context": "MD5 initial hash values. MD5 is cryptographically broken but still used. These constants in sequence confirm MD5.",
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "critical",
+      "note": "MD5 is broken (collision attacks), should not be used for security"
+    },
+    {
+      "type": "constant",
+      "category": "SHA1_Initial_Hash",
+      "algorithm": "SHA-1",
+      "values": [
+        {"hex": "0x67452301", "description": "H0"},
+        {"hex": "0xefcdab89", "description": "H1"},
+        {"hex": "0x98badcfe", "description": "H2"},
+        {"hex": "0x10325476", "description": "H3"},
+        {"hex": "0xc3d2e1f0", "description": "H4"}
+      ],
+      "detection_context": "SHA-1 initial hash values. SHA-1 is deprecated (collision attacks). Not quantum-specific but generally vulnerable.",
+      "confidence": 0.98,
+      "quantum_vulnerable": false,
+      "severity": "high",
+      "note": "SHA-1 is deprecated due to collision attacks"
+    },
+    {
+      "type": "constant",
+      "category": "SEED_S-Box",
+      "algorithm": "SEED",
+      "values": [
+        {"hex": "0xA9", "box": "SS0", "position": 0, "description": "SEED SS0 S-box first entry"},
+        {"hex": "0x85", "box": "SS0", "position": 1},
+        {"hex": "0xD6", "box": "SS1", "position": 0, "description": "SEED SS1 S-box first entry"}
+      ],
+      "detection_context": "SEED cipher uses 4 S-boxes (SS0-SS3) each with 256 entries. Finding these specific S-box values indicates Korean SEED cipher.",
+      "confidence": 0.9,
+      "quantum_vulnerable": false,
+      "severity": "medium",
+      "note": "Korean standard cipher"
+    },
+    {
+      "type": "constant",
+      "category": "ARIA_S-Box",
+      "algorithm": "ARIA",
+      "values": [
+        {"hex": "0x63", "box": "S1", "position": 0, "description": "ARIA S1 S-box (same as AES)"},
+        {"hex": "0x7C", "box": "S1", "position": 1},
+        {"hex": "0x52", "box": "S2", "position": 0, "description": "ARIA S2 S-box (inverted from S1)"}
+      ],
+      "detection_context": "ARIA uses two S-boxes: S1 (identical to AES S-box) and S2 (inverse mapping). Alternating use distinguishes ARIA from AES.",
+      "confidence": 0.85,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "note": "Korean standard cipher, quantum-resistant"
+    },
+    {
+      "type": "constant",
+      "category": "RC4_S-Box_Init",
+      "algorithm": "RC4",
+      "values": [
+        {"hex": "0x00 0x01 0x02 0x03 ... 0xFF", "description": "RC4 initial S-box (identity permutation)"}
+      ],
+      "detection_context": "RC4 initializes S-box as [0,1,2,...,255] then scrambles with key. Finding this initialization indicates RC4 (deprecated).",
+      "confidence": 0.8,
+      "quantum_vulnerable": false,
+      "severity": "critical",
+      "note": "RC4 is deprecated and insecure (biases in keystream)"
+    },
+    {
+      "type": "constant",
+      "category": "DES_IP_Permutation",
+      "algorithm": "DES",
+      "values": [
+        {"permutation": [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4], "description": "DES Initial Permutation (first 16 positions)"}
+      ],
+      "detection_context": "DES uses fixed permutation tables (IP, E, P, PC1, PC2). Finding these specific permutations indicates DES (obsolete).",
+      "confidence": 0.9,
+      "quantum_vulnerable": false,
+      "severity": "critical",
+      "note": "DES is obsolete (56-bit key broken)"
+    },
+    {
+      "type": "constant",
+      "category": "ChaCha20_Constants",
+      "algorithm": "ChaCha20",
+      "values": [
+        {"hex": "0x61707865", "ascii": "expa", "description": "ChaCha constant word 0"},
+        {"hex": "0x3320646e", "ascii": "nd 3", "description": "ChaCha constant word 1"},
+        {"hex": "0x79622d32", "ascii": "2-by", "description": "ChaCha constant word 2"},
+        {"hex": "0x6b206574", "ascii": "te k", "description": "ChaCha constant word 3"}
+      ],
+      "detection_context": "ChaCha20 initialization constants spell 'expand 32-byte k' in ASCII. Strong indicator of ChaCha20/Poly1305 (quantum-resistant).",
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "note": "ChaCha20 is quantum-resistant and modern"
+    },
+    {
+      "type": "constant",
+      "category": "Poly1305_Prime",
+      "algorithm": "Poly1305",
+      "values": [
+        {"hex": "0x3fffffffffffffffffffffffffffffffb", "decimal": "2^130 - 5", "description": "Poly1305 prime modulus"}
+      ],
+      "detection_context": "Poly1305 MAC uses prime 2^130-5. Finding this 130-bit prime in modular arithmetic indicates Poly1305 authentication.",
+      "confidence": 0.95,
+      "quantum_vulnerable": false,
+      "severity": "low"
+    },
+    {
+      "type": "constant",
+      "category": "BLAKE2_IV",
+      "algorithm": "BLAKE2",
+      "values": [
+        {"hex": "0x6a09e667f3bcc908", "description": "BLAKE2b IV[0] (same as SHA-512)"},
+        {"hex": "0xbb67ae8584caa73b", "description": "BLAKE2b IV[1]"}
+      ],
+      "detection_context": "BLAKE2 uses SHA-2 initial values. Combined with BLAKE2-specific mixing, these indicate BLAKE2 hash function.",
+      "confidence": 0.85,
+      "quantum_vulnerable": false,
+      "severity": "low"
+    },
+    {
+      "type": "constant",
+      "category": "Curve25519_Prime",
+      "algorithm": "Curve25519",
+      "values": [
+        {"hex": "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed", "decimal": "2^255 - 19", "description": "Curve25519 prime p"}
+      ],
+      "detection_context": "Curve25519/Ed25519 uses prime 2^255-19. Finding this prime in modular arithmetic indicates modern ECC (still quantum-vulnerable).",
+      "confidence": 0.95,
+      "quantum_vulnerable": true,
+      "severity": "critical",
+      "note": "Modern ECC but still vulnerable to Shor's algorithm"
+    },
+    {
+      "type": "constant",
+      "category": "LSH256_IV",
+      "algorithm": "LSH",
+      "values": [
+        {"hex": "0x068608d3", "description": "LSH-256 IV[0]"},
+        {"hex": "0x62d8f7a7", "description": "LSH-256 IV[1]"},
+        {"hex": "0xd76652ab", "description": "LSH-256 IV[2]"}
+      ],
+      "detection_context": "LSH (Korean hash) initialization vectors. Finding these specific values indicates LSH-256 implementation.",
+      "confidence": 0.9,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "note": "Korean lightweight hash function"
+    }
+  ]
+}

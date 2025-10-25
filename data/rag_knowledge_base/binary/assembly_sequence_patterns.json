@@ -1,0 +1,368 @@
+{
+  "description": "Assembly instruction sequences and patterns for detecting cryptographic algorithms without function names or strings",
+  "patterns": [
+    {
+      "type": "instruction_sequence",
+      "category": "Modular_Exponentiation_x86",
+      "algorithm": "RSA/DH/DSA",
+      "architecture": "x86/x64",
+      "pattern": "Square-and-multiply loop for modular exponentiation",
+      "instruction_sequence": [
+        "1. Initialize: mov/load base, exponent, modulus",
+        "2. Loop start: test exponent bit (bt, shr, and)",
+        "3. Square step: mul (multiply result by itself)",
+        "4. Modulo reduction: div/idiv or Barrett/Montgomery reduction",
+        "5. Conditional multiply: if bit=1, mul base",
+        "6. Modulo reduction again",
+        "7. Shift exponent: shr/ror",
+        "8. Loop condition: test/cmp, jnz/jne back to step 2"
+      ],
+      "key_indicators": [
+        "Nested loops with bit testing",
+        "Repeated mul followed by div/idiv",
+        "Large integer operations (128-4096 bits)",
+        "Montgomery multiplication pattern: mulx, adcx, adox (x64)",
+        "Carry flag manipulation (adc, sbb)"
+      ],
+      "confidence": 0.9,
+      "quantum_vulnerable": true,
+      "severity": "critical",
+      "detection_notes": "Look for loops that process bits of an exponent. Montgomery reduction uses special constants (R, R^-1) and avoids division."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "AES_Round_x86",
+      "algorithm": "AES",
+      "architecture": "x86/x64",
+      "pattern": "AES round function without AES-NI instructions",
+      "instruction_sequence": [
+        "1. SubBytes: movzx for array indexing, lookup from S-box table",
+        "2. ShiftRows: byte shuffling with shifts/rotates",
+        "3. MixColumns: xor, rotates (rol/ror), lookups in GF(2^8) tables",
+        "4. AddRoundKey: xor with round key (16 bytes)",
+        "5. Repeat 10/12/14 times (counted loop)"
+      ],
+      "key_indicators": [
+        "Array access with byte indexing (movzx bl, [array + rax])",
+        "16-byte XOR operations",
+        "Byte rotations by 1, 2, 3 positions",
+        "10-14 iterations in outer loop",
+        "Table lookups (256-entry arrays)",
+        "GF(2^8) multiplication tables for MixColumns"
+      ],
+      "confidence": 0.95,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "Software AES implementation. Distinguishable from hardware AES-NI by lack of aesenc/aesenclast instructions."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "AES_NI_x86",
+      "algorithm": "AES",
+      "architecture": "x86/x64",
+      "pattern": "AES with hardware acceleration (AES-NI)",
+      "instruction_sequence": [
+        "1. Load plaintext: movdqu xmm0, [input]",
+        "2. Load round keys: movdqu xmm1-xmm11, [key_schedule]",
+        "3. Initial key addition: pxor xmm0, xmm1",
+        "4. AES rounds: aesenc xmm0, xmm2 (repeated 9-13 times)",
+        "5. Final round: aesenclast xmm0, xmm11",
+        "6. Store ciphertext: movdqu [output], xmm0"
+      ],
+      "key_indicators": [
+        "aesenc instruction (0x66 0x0F 0x38 0xDC opcode)",
+        "aesenclast instruction",
+        "aesdec/aesdeclast for decryption",
+        "aeskeygenassist for key expansion",
+        "aesimc for inverse mix columns",
+        "XMM registers (xmm0-xmm15)",
+        "16-byte aligned loads/stores"
+      ],
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "Hardware AES is trivial to detect by aesenc/aesdec instructions. Intel AES-NI opcodes are definitive."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "Elliptic_Curve_Point_Addition_x86",
+      "algorithm": "ECDSA/ECDH",
+      "architecture": "x86/x64",
+      "pattern": "Elliptic curve point addition: (x3,y3) = (x1,y1) + (x2,y2)",
+      "instruction_sequence": [
+        "1. Compute slope λ = (y2-y1)/(x2-x1) mod p",
+        "2. Modular subtraction: sub, sbb for multi-precision",
+        "3. Modular inverse: Extended GCD or Fermat's little theorem (p-2 exponentiation)",
+        "4. Modular multiplication: mul, imul with reduction",
+        "5. Compute x3 = λ² - x1 - x2 mod p",
+        "6. Compute y3 = λ(x1 - x3) - y1 mod p",
+        "7. Handle special cases: point at infinity, point doubling"
+      ],
+      "key_indicators": [
+        "Multi-precision subtraction (sub/sbb chains)",
+        "Modular inverse computation (extended GCD loop)",
+        "Point doubling check (compare x1, x2)",
+        "Coordinate pairs (x, y) in memory structures",
+        "256-bit or 384-bit field operations",
+        "Conditional moves for constant-time execution (cmov)",
+        "Projective coordinates: (X, Y, Z) with Z≠0 checks"
+      ],
+      "confidence": 0.85,
+      "quantum_vulnerable": true,
+      "severity": "critical",
+      "detection_notes": "ECC point operations are complex. Look for paired operations on (x,y) coordinates with modular arithmetic."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "SHA256_Compression_x86",
+      "algorithm": "SHA-256",
+      "architecture": "x86/x64",
+      "pattern": "SHA-256 compression function (64 rounds)",
+      "instruction_sequence": [
+        "1. Initialize working variables a-h from hash state",
+        "2. Message schedule: expand 16 words to 64 (σ0, σ1 operations)",
+        "3. Round function (×64):",
+        "   - T1 = h + Σ1(e) + Ch(e,f,g) + K[i] + W[i]",
+        "   - T2 = Σ0(a) + Maj(a,b,c)",
+        "   - Rotate variables: h=g, g=f, f=e, e=d+T1, d=c, c=b, b=a, a=T1+T2",
+        "4. Add to hash state: add a-h to H0-H7"
+      ],
+      "key_indicators": [
+        "64 round iterations (counted loop)",
+        "Right rotate (ror) by specific amounts: 2,6,7,11,13,17,18,19,22,25",
+        "Logical functions: and, or, xor, not",
+        "8 working variables (32-bit registers)",
+        "Add operations (add, no mul)",
+        "Constant array K access (64 entries)",
+        "Message schedule expansion loop"
+      ],
+      "confidence": 0.95,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "SHA-256 has distinctive rotation amounts and 64 rounds. No multiplication, only add/rotate/xor."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "SHA_Extensions_x86",
+      "algorithm": "SHA-1/SHA-256",
+      "architecture": "x86/x64",
+      "pattern": "SHA hardware acceleration (Intel SHA Extensions)",
+      "instruction_sequence": [
+        "1. Load message: movdqu xmm0-xmm3, [input]",
+        "2. SHA256 rounds: sha256rnds2 xmm0, xmm1, xmm2",
+        "3. Message schedule: sha256msg1 xmm0, xmm1",
+        "4. Message schedule: sha256msg2 xmm0, xmm1",
+        "5. Repeat for all rounds",
+        "6. Store hash: movdqu [output], xmm0"
+      ],
+      "key_indicators": [
+        "sha256rnds2 instruction (2 rounds at once)",
+        "sha256msg1 instruction (message schedule part 1)",
+        "sha256msg2 instruction (message schedule part 2)",
+        "sha1rnds4 for SHA-1",
+        "sha1nexte, sha1msg1, sha1msg2 for SHA-1",
+        "XMM registers with hash state"
+      ],
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "Intel SHA Extensions provide dedicated instructions. Trivial to detect."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "Montgomery_Multiplication_x86",
+      "algorithm": "RSA/ECC (optimized)",
+      "architecture": "x86/x64",
+      "pattern": "Montgomery multiplication for fast modular reduction",
+      "instruction_sequence": [
+        "1. Multiply: mul a, b → (high, low)",
+        "2. Compute u = (low * N') mod R (N' is precomputed)",
+        "3. Multiply: mul u, N → (high2, low2)",
+        "4. Add: add (high, low), (high2, low2)",
+        "5. Divide by R: shift right (implicit, R = 2^k)",
+        "6. Conditional reduction: if result >= N, sub N"
+      ],
+      "key_indicators": [
+        "Precomputed constants (N', R, R^-1)",
+        "Two multiplication steps",
+        "Right shift by fixed amount (word size)",
+        "No division instruction (div/idiv)",
+        "Conditional subtraction at end (cmp, sub, cmov)",
+        "Multi-precision arithmetic (adc chains)",
+        "MULX, ADCX, ADOX instructions (BMI2/ADX on modern x64)"
+      ],
+      "confidence": 0.9,
+      "quantum_vulnerable": true,
+      "severity": "critical",
+      "detection_notes": "Montgomery reduction is the optimization used in production RSA/ECC. Avoids expensive division."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "ChaCha20_Quarter_Round_ARM",
+      "algorithm": "ChaCha20",
+      "architecture": "ARM",
+      "pattern": "ChaCha20 quarter-round function",
+      "instruction_sequence": [
+        "1. a += b; d ^= a; d <<<= 16",
+        "2. c += d; b ^= c; b <<<= 12",
+        "3. a += b; d ^= a; d <<<= 8",
+        "4. c += d; b ^= c; b <<<= 7"
+      ],
+      "key_indicators": [
+        "ADD instructions (VADD on NEON)",
+        "EOR (XOR) instructions",
+        "Rotate left: ROR with negative amount or VSHL/VSHR combination",
+        "Specific rotation amounts: 16, 12, 8, 7",
+        "20 rounds (double-round × 10)",
+        "NEON SIMD operations (VADD.i32, VEOR)",
+        "4×4 state matrix"
+      ],
+      "confidence": 0.95,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "ChaCha20 has very distinctive rotation amounts (16,12,8,7). No multiplication or table lookups."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "AES_ARM_NEON",
+      "algorithm": "AES",
+      "architecture": "ARM",
+      "pattern": "AES with ARM Crypto Extensions",
+      "instruction_sequence": [
+        "1. Load plaintext: VLD1.8 {q0}, [input]",
+        "2. Load round keys: VLD1.8 {q1-q11}, [keys]",
+        "3. Initial round: VEOR q0, q0, q1",
+        "4. AES rounds: AESE.8 q0, q2 (×10 for AES-128)",
+        "5. Mix columns: AESMC.8 q0, q0 (after each AESE except last)",
+        "6. Final round: AESE.8 q0, q11",
+        "7. Store: VST1.8 {q0}, [output]"
+      ],
+      "key_indicators": [
+        "AESE.8 instruction (AES single round encryption)",
+        "AESD.8 instruction (AES single round decryption)",
+        "AESMC.8 (AES mix columns)",
+        "AESIMC.8 (AES inverse mix columns)",
+        "NEON Q registers (q0-q15)",
+        "VLD1/VST1 for 128-bit loads/stores"
+      ],
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "ARMv8 Crypto Extensions have dedicated AES instructions. Definitive detection."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "SHA256_ARM_Crypto",
+      "algorithm": "SHA-256",
+      "architecture": "ARM",
+      "pattern": "SHA-256 with ARM Crypto Extensions",
+      "instruction_sequence": [
+        "1. Load hash state: VLD1.32 {q0-q1}, [hash]",
+        "2. Load message: VLD1.32 {q2-q5}, [input]",
+        "3. SHA256 rounds: SHA256H.32 q0, q1, q2",
+        "4. SHA256 rounds: SHA256H2.32 q1, q0, q2",
+        "5. Message schedule: SHA256SU0.32 q2, q3",
+        "6. Message schedule: SHA256SU1.32 q2, q4, q5",
+        "7. Repeat for 16 rounds (4 message blocks)",
+        "8. Store hash: VST1.32 {q0-q1}, [output]"
+      ],
+      "key_indicators": [
+        "SHA256H.32 instruction (hash update)",
+        "SHA256H2.32 instruction (hash update part 2)",
+        "SHA256SU0.32 (message schedule update 0)",
+        "SHA256SU1.32 (message schedule update 1)",
+        "NEON Q registers",
+        "32-bit word operations (.32 suffix)"
+      ],
+      "confidence": 0.99,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "ARMv8 SHA Extensions are definitive. Look for SHA256H/SHA256SU opcodes."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "Poly1305_SIMD",
+      "algorithm": "Poly1305",
+      "architecture": "x86/ARM",
+      "pattern": "Poly1305 MAC computation with SIMD",
+      "instruction_sequence": [
+        "1. Initialize accumulator h = 0",
+        "2. Load r (clamped random value) and s (secret)",
+        "3. Loop over 16-byte message blocks:",
+        "   - Load message block m",
+        "   - h = ((h + m) * r) mod (2^130 - 5)",
+        "4. Final addition: h = (h + s) mod 2^128",
+        "5. Output 16-byte tag"
+      ],
+      "key_indicators": [
+        "130-bit arithmetic (5 × 26-bit limbs or 3 × 44-bit limbs)",
+        "Modular reduction by 2^130 - 5",
+        "Multiplication by clamped r value",
+        "SIMD multiplication (pmuludq, vmlal)",
+        "Carry propagation across limbs",
+        "Final addition with s",
+        "16-byte block processing"
+      ],
+      "confidence": 0.85,
+      "quantum_vulnerable": false,
+      "severity": "low",
+      "detection_notes": "Poly1305 uses unusual 130-bit prime. Look for 5-limb arithmetic and specific modular reduction."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "SEED_Feistel_Round",
+      "algorithm": "SEED",
+      "architecture": "Any",
+      "pattern": "SEED Feistel round function",
+      "instruction_sequence": [
+        "1. Split block: L, R (64 bits each)",
+        "2. F-function:",
+        "   - XOR R with round key",
+        "   - Apply G-functions (S-box lookups)",
+        "   - XOR and byte operations",
+        "3. L = L XOR F(R, K)",
+        "4. Swap L and R",
+        "5. Repeat 16 rounds",
+        "6. Final swap"
+      ],
+      "key_indicators": [
+        "16 round iterations",
+        "64-bit half-block operations",
+        "4 S-box lookups per round (256-entry tables)",
+        "XOR and byte-level operations",
+        "Round key array (32 × 32-bit keys)",
+        "Feistel swap pattern",
+        "No MixColumns-like matrix multiplication"
+      ],
+      "confidence": 0.8,
+      "quantum_vulnerable": false,
+      "severity": "medium",
+      "detection_notes": "SEED is distinguishable from DES by 128-bit blocks and specific S-boxes. Korean cipher."
+    },
+    {
+      "type": "instruction_sequence",
+      "category": "Constant_Time_Conditional_Move",
+      "algorithm": "Generic_ECC",
+      "architecture": "x86/ARM",
+      "pattern": "Constant-time conditional operations for ECC",
+      "instruction_sequence": [
+        "1. Compute mask from condition: condition ? -1 : 0",
+        "2. Conditional move: result = (mask & a) | (~mask & b)",
+        "3. Alternative: CMOV instruction (x86)",
+        "4. Alternative: CSEL instruction (ARM)"
+      ],
+      "key_indicators": [
+        "CMOV instructions (x86): cmovz, cmovnz, cmove, cmovne",
+        "CSEL instructions (ARM): csel, csinc, csinv",
+        "Mask-based selection: and, or, xor with computed masks",
+        "No conditional branches (je, jne, beq, bne)",
+        "Timing-attack resistance pattern",
+        "Used in Montgomery ladder, scalar multiplication"
+      ],
+      "confidence": 0.7,
+      "quantum_vulnerable": true,
+      "severity": "high",
+      "detection_notes": "Constant-time code indicates security-critical crypto, often ECC. Combined with field arithmetic, confirms ECC."
+    }
+  ]
+}

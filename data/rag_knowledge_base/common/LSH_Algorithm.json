@@ -1,0 +1,96 @@
+{
+  "algorithm": "LSH",
+  "type": "cryptographic_hash_function",
+  "patterns": [
+    {
+      "type": "algorithm_info",
+      "category": "LSH_Overview",
+      "content": "LSH (Lightweight Secure Hash) is a cryptographic hash function developed by KISA (Korea Information Security Agency) in 2014. Output sizes: 224, 256, 384, 512 bits. Message block size: 1024 bits (LSH-256) or 2048 bits (LSH-512). Structure: Wide-pipe Merkle-Damgård with ARX operations. Designed for high performance on both software and hardware. Quantum resistance: Hash functions are relatively secure against quantum attacks, but 512-bit output recommended for long-term security.",
+      "confidence": 1.0,
+      "source": "LSH_Specification",
+      "severity": "low",
+      "quantum_resistance": "Hash functions require 2^n preimage resistance. Quantum computers provide ~sqrt speedup, so LSH-512 provides ~256-bit quantum security"
+    },
+    {
+      "type": "code_pattern",
+      "category": "LSH_Implementation",
+      "content": "LSH implementation patterns: import lsh, from lsh import LSH256, LSH512, lsh.hash(), lsh_digest(). Libraries: pylsh, liblsh, lsh-hash packages. Usage: hash_value = LSH256(message).digest(), digest = lsh.hash(data, output_size=256).",
+      "confidence": 0.9,
+      "source": "LSH_Libraries",
+      "keywords": ["import lsh", "from lsh", "LSH256", "LSH512", "lsh.hash", "lsh_digest", "LSH.new"],
+      "file_extensions": [".py", ".c", ".cpp", ".java"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "LSH_Configuration",
+      "content": "LSH in configuration files: hash_algorithm: LSH-256, digest_function: LSH-512, checksum: LSH. Common in Korean systems for integrity verification, digital signatures (with KCDSA/EC-KCDSA), blockchain applications.",
+      "confidence": 0.85,
+      "source": "LSH_Config",
+      "keywords": ["LSH-224", "LSH-256", "LSH-384", "LSH-512", "hash: LSH", "algorithm: LSH", "digest_algo: LSH"],
+      "severity": "low",
+      "note": "LSH-512 recommended for long-term security and quantum resistance"
+    },
+    {
+      "type": "binary_signature",
+      "category": "LSH_Binary",
+      "content": "LSH binary signatures: lsh_init, lsh_update, lsh_final, lsh_digest function names. Compression function: CF (uses ARX operations). Step functions: Mix, WordPerm, Step. Characteristic constants: IV (initialization vectors) for LSH-256/512.",
+      "confidence": 0.8,
+      "source": "LSH_Binary_Analysis",
+      "keywords": ["lsh_init", "lsh_update", "lsh_final", "lsh_digest", "LSH_CF", "LSH_Mix", "LSH_Step"],
+      "severity": "info"
+    },
+    {
+      "type": "performance",
+      "category": "LSH_Speed",
+      "content": "LSH performance: 1.5-2.5x faster than SHA-2 on general-purpose processors. ARX-based design optimized for 32-bit and 64-bit architectures. Efficient on Intel, AMD, ARM processors. Parallel processing capability with SIMD instructions. Suitable for high-throughput applications.",
+      "confidence": 0.9,
+      "source": "LSH_Performance_Analysis",
+      "severity": "info",
+      "note": "Performance advantage makes it suitable for blockchain, file integrity, and real-time applications"
+    },
+    {
+      "type": "vulnerability",
+      "category": "LSH_Quantum",
+      "content": "LSH quantum vulnerability: Hash functions are more resistant to quantum attacks than asymmetric crypto. Grover's algorithm reduces security by half: LSH-256 → 128-bit quantum security, LSH-512 → 256-bit quantum security. No structural weaknesses found. LSH-512 recommended for post-quantum applications.",
+      "confidence": 1.0,
+      "source": "Quantum_Cryptanalysis",
+      "severity": "low",
+      "recommendation": "Use LSH-512 for long-term security and quantum resistance"
+    },
+    {
+      "type": "standard",
+      "category": "LSH_Standards",
+      "content": "LSH standards: Korean standard KS X 3262 (2018), ISO/IEC 29192-5:2016 candidate for lightweight hash functions. Evaluated by CRYPTREC (Japan). Submitted to NIST Lightweight Cryptography standardization.",
+      "confidence": 1.0,
+      "source": "Standards_Bodies",
+      "severity": "info"
+    },
+    {
+      "type": "usage_context",
+      "category": "LSH_Usage",
+      "content": "LSH usage: Digital signatures (with KCDSA/EC-KCDSA), blockchain systems, file integrity verification, password hashing (with proper KDF), HMAC for message authentication. Popular in Korean government, finance, blockchain projects.",
+      "confidence": 0.9,
+      "source": "Industry_Practice",
+      "severity": "low",
+      "note": "Often paired with Korean signature algorithms KCDSA/EC-KCDSA"
+    },
+    {
+      "type": "comparison",
+      "category": "LSH_vs_SHA",
+      "content": "LSH vs SHA comparison: LSH-256 faster than SHA-256 (1.5-2x), similar security level. LSH-512 faster than SHA-512 (2-2.5x). Both use Merkle-Damgård structure but LSH uses wide-pipe design. LSH optimized for ARX operations, SHA uses logical functions. For quantum resistance: LSH-512 ≈ SHA-512 (both ~256-bit quantum security).",
+      "confidence": 0.85,
+      "source": "Algorithm_Comparison",
+      "severity": "info"
+    },
+    {
+      "type": "detection_priority",
+      "category": "LSH_Detection",
+      "content": "LSH detection priorities: LOW - LSH-512 usage (quantum-resistant), MEDIUM - LSH-256 in long-term storage (consider LSH-512), HIGH - Non-standard implementations or truncated outputs. Check output size and usage context (signatures, blockchain, integrity).",
+      "confidence": 0.85,
+      "source": "Security_Guidelines",
+      "severity": "info",
+      "recommendation": "LSH-512 is suitable for post-quantum applications"
+    }
+  ]
+}

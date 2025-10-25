@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     ORCHESTRATOR_MODEL: str = "gpt-4-turbo"  # GPT-4.1
     SOURCE_CODE_MODEL: str = "gemini-2.0-flash-exp"  # Gemini 2.5 Flash
     BINARY_MODEL: str = "gemini-2.0-flash-exp"  # Gemini 2.5 Flash (Assembly Code)
-    PARAMETER_MODEL: str = "gpt-4-turbo"  # GPT-4.1
     LOG_CONF_MODEL: str = "gemini-2.0-flash-exp"  # Gemini 2.5 Flash
 
     # 레거시 Ollama 설정 (백업용)

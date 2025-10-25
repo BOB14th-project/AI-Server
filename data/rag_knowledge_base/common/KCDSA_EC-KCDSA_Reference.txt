@@ -1,0 +1,324 @@
+================================================================================
+KCDSA/EC-KCDSA (Korean Certificate-based Digital Signature Algorithm)
+Technical Reference Document
+================================================================================
+
+1. Overview
+================================================================================
+
+KCDSA (Korean Certificate-based Digital Signature Algorithm)
+- Developed by Korea Information Security Agency (KISA) in 1998
+- Established as Korean National Standard (KS) in 1998
+- Certificate-based digital signature scheme
+- Variant of DSA (Digital Signature Algorithm)
+
+EC-KCDSA (Elliptic Curve KCDSA)
+- Elliptic curve version of KCDSA
+- Provides equivalent security with shorter key lengths
+- Optimized for mobile and embedded environments
+
+
+2. Quantum Computer Vulnerability Analysis
+================================================================================
+
+2.1 KCDSA Vulnerability
+------------------
+- Based on Discrete Logarithm Problem (DLP)
+- Can be solved in polynomial time using Shor's Algorithm
+- Completely vulnerable in quantum computing environment
+- Security strength: 0 bits against quantum computers
+
+2.2 EC-KCDSA Vulnerability
+------------------
+- Based on Elliptic Curve Discrete Logarithm Problem (ECDLP)
+- Can be solved using modified Shor's Algorithm
+- More efficient than KCDSA but equally vulnerable to quantum computers
+- Vulnerable to quantum attacks regardless of key length
+
+
+3. Algorithm Structure
+================================================================================
+
+3.1 KCDSA Key Generation
+------------------
+Parameters:
+- p: large prime (1024, 2048 bits)
+- q: prime divisor of p-1 (160, 224, 256 bits)
+- g: generator of order q
+
+Private key: x (0 < x < q)
+Public key: y = g^x mod p
+
+3.2 KCDSA Signature Generation
+------------------
+Input: Message M, private key x
+Output: Signature (r, s)
+
+1. Select random k (0 < k < q)
+2. w = g^k mod p
+3. r = h(w) (hash function)
+4. e = h(z || M) (z: certificate information)
+5. s = x(k - e) mod q
+6. Signature = (r, s)
+
+3.3 EC-KCDSA Key Generation
+------------------
+Elliptic curve parameters:
+- E: elliptic curve (e.g., secp256r1, secp384r1)
+- G: base point
+- n: order of G
+
+Private key: d (0 < d < n)
+Public key: Q = dG
+
+3.4 EC-KCDSA Signature Generation
+------------------
+1. Select random k
+2. (x₁, y₁) = kG
+3. r = h(x₁)
+4. e = h(z || M)
+5. s = d(k - e) mod n
+6. Signature = (r, s)
+
+
+4. Code Detection Patterns
+================================================================================
+
+4.1 Python Implementation Patterns
+------------------
+# KCDSA library imports
+import kcdsa
+from kcdsa import KCDSA, ECKeyCDSA
+from korean_crypto import KCDSA
+
+# Key generation patterns
+kcdsa_key = KCDSA.generate_key(bits=2048)
+ec_kcdsa_key = ECKeyCDSA.generate_key(curve='secp256r1')
+
+# Signature generation
+signature = kcdsa_key.sign(message, certificate_info)
+ec_signature = ec_kcdsa_key.sign(message, z)
+
+4.2 Java Implementation Patterns
+------------------
+// KCDSA usage
+import kr.or.kisa.crypto.KCDSA;
+import kr.or.kisa.crypto.ECKeyCDSA;
+
+// Key generation
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("KCDSA");
+kpg.initialize(2048);
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Signature
+Signature sig = Signature.getInstance("KCDSA");
+sig.initSign(privateKey);
+sig.update(message);
+byte[] signature = sig.sign();
+
+4.3 C/C++ Implementation Patterns
+------------------
+// OpenSSL-based KCDSA implementation
+#include <openssl/kcdsa.h>
+#include <kisa/kcdsa.h>
+
+// Key generation
+KCDSA *kcdsa = KCDSA_new();
+KCDSA_generate_key(kcdsa, 2048);
+
+// EC-KCDSA
+EC_KEY *ec_key = EC_KEY_new_by_curve_name(NID_secp256r1);
+KCDSA_sign_setup(ec_key, ctx, &kinv, &rp);
+
+4.4 Configuration File Patterns
+------------------
+# SSL/TLS configuration
+signature_algorithm: KCDSA
+signature_algorithm: ECKCDSA
+cipher_suite: TLS_ECDHE_KCDSA_WITH_AES_256_GCM_SHA384
+
+# Certificate configuration
+{
+  "signature_algorithm": "KCDSA-SHA256",
+  "public_key_algorithm": "KCDSA",
+  "key_size": 2048
+}
+
+# SSH configuration
+PubkeyAcceptedKeyTypes +kcdsa-sha2-256
+HostKeyAlgorithms +ecdsa-kcdsa-nistp256
+
+
+5. Log Detection Patterns
+================================================================================
+
+5.1 Certificate Logs
+------------------
+Certificate signature algorithm: KCDSA-SHA256
+Public key algorithm: id-kcdsa
+Certificate public key: KCDSA (2048 bit)
+EC-KCDSA signature algorithm: eckcdsa-sha2-256
+
+5.2 TLS/SSL Logs
+------------------
+Server certificate: KCDSA 2048 bit
+Signature algorithm: KCDSA with SHA-256
+Cipher suite: TLS_ECDHE_KCDSA_WITH_AES_128_GCM_SHA256
+Peer signing digest: SHA256-KCDSA
+
+5.3 SSH Logs
+------------------
+Server host key: kcdsa-sha2-256 AAAAC3...
+Host key verification successful (kcdsa-sha2-256)
+User authentication method: publickey (eckcdsa-sha2-nistp256)
+
+5.4 API/Application Logs
+------------------
+Using signature algorithm: KCDSA
+Generated KCDSA keypair (2048 bits)
+EC-KCDSA signature verification successful
+KCDSA signing operation completed
+
+
+6. Binary Signatures
+================================================================================
+
+6.1 Function Name Signatures
+------------------
+KCDSA_new
+KCDSA_free
+KCDSA_generate_key
+KCDSA_sign
+KCDSA_verify
+KCDSA_size
+EC_KCDSA_sign
+EC_KCDSA_verify
+kcdsa_do_sign
+kcdsa_do_verify
+
+6.2 Constants and OIDs
+------------------
+// KCDSA OID
+1.2.410.200004.1.100.4.3  (KCDSA)
+1.2.410.200004.1.100.4.5  (EC-KCDSA)
+
+// Constants
+KCDSA_F_KCDSA_DO_SIGN
+KCDSA_F_KCDSA_DO_VERIFY
+KCDSA_R_INVALID_DIGEST_LENGTH
+
+6.3 DLL/SO Libraries
+------------------
+libkcdsa.so
+libkcdsa.dll
+kcdsa.dll
+libkisa_kcdsa.so
+openssl_kcdsa.dll
+
+
+7. Quantum-Resistant Alternatives
+================================================================================
+
+7.1 NIST PQC Standard Signature Algorithms
+------------------
+CRYSTALS-Dilithium (Recommended)
+- Lattice-based digital signature
+- Security levels: Dilithium2 (NIST Level 2), Dilithium3 (Level 3), Dilithium5 (Level 5)
+- Public key: 1312-2592 bytes
+- Signature: 2420-4595 bytes
+
+FALCON
+- NTRU lattice-based signature
+- Smaller signature size
+- Public key: 897-1793 bytes
+- Signature: 666-1280 bytes
+
+SPHINCS+
+- Hash-based signature
+- Most conservative security assumption
+- Large signature size (7856-49856 bytes)
+
+7.2 Migration Recommendations
+------------------
+1. KCDSA → Dilithium3 (general purpose)
+2. EC-KCDSA → Dilithium2 (mobile/IoT)
+3. High security → Dilithium5 + FALCON512
+
+
+8. Vulnerability Assessment Criteria
+================================================================================
+
+8.1 Risk Classification
+------------------
+CRITICAL (Immediate action):
+- KCDSA ≤ 1024 bits
+- Legacy parameters
+- Weak hash combinations (MD5, SHA-1)
+
+HIGH (Priority action):
+- KCDSA 2048 bits
+- EC-KCDSA all curves
+- Production environment usage
+
+MEDIUM (Planned transition):
+- Test environment usage
+- Legacy compatibility purposes
+
+LOW (Monitoring):
+- Documentation purposes only
+- Can be immediately disabled
+
+8.2 Security Recommendations
+------------------
+Short-term (1-2 years):
+- Hybrid approach: KCDSA + Dilithium parallel
+- Gradual migration
+
+Mid-term (3-5 years):
+- Complete PQC transition
+- End KCDSA legacy support
+
+Long-term (5+ years):
+- PQC-only systems
+
+
+9. Reference Standards and Documents
+================================================================================
+
+Domestic Standards:
+- TTAS.KO-12.0001/R4: Digital Signature Algorithm KCDSA
+- KS X ISO/IEC 14888-3: Digital signatures - KCDSA
+
+International References:
+- ISO/IEC 14888-3: Digital signatures with appendix
+- NIST FIPS 186-5: Digital Signature Standard (DSS)
+- NIST PQC Standardization: Post-Quantum Cryptography
+
+Security Advisories:
+- KISA Post-Quantum Cryptography Migration Guidelines
+- NIST Post-Quantum Cryptography Project
+- NSA CNSA 2.0 Suite (Transition to PQC by 2035)
+
+
+10. Detection Priorities
+================================================================================
+
+Highest Priority:
+1. KCDSA usage in certificate issuance/signing
+2. KCDSA in TLS/SSL handshake
+3. KCDSA signatures in API authentication
+
+Important Detection:
+4. KCDSA algorithm specification in config files
+5. KCDSA library imports in code
+6. KCDSA function calls in binaries
+
+Reference Detection:
+7. KCDSA references in log files
+8. KCDSA mentions in documentation/comments
+
+================================================================================
+Created: 2025
+Purpose: PQC Inspector RAG Knowledge Base
+Classification: Quantum-Vulnerable Algorithm - Korean Standard Digital Signature
+================================================================================
