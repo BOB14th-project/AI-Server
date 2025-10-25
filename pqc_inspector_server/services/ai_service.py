@@ -12,6 +12,7 @@ class AIService:
         self.google_api_key = settings.GOOGLE_API_KEY
         self.openai_base_url = "https://api.openai.com/v1"
         self.google_base_url = "https://generativelanguage.googleapis.com/v1beta"
+        self.ollama_base_url = settings.OLLAMA_BASE_URL
         print("AIService가 초기화되었습니다.")
 
     async def generate_response(self, model: str, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
@@ -29,6 +30,8 @@ class AIService:
                 response = await self._call_openai(model, prompt, system_prompt)
             elif model.startswith("gemini-"):
                 response = await self._call_google(model, prompt, system_prompt)
+            elif ":" in model:  # Ollama 모델 (예: llama3:8b)
+                response = await self._call_ollama(model, prompt, system_prompt)
             else:
                 raise ValueError(f"지원하지 않는 모델: {model}")
 
@@ -134,6 +137,51 @@ class AIService:
                 return {
                     "success": False,
                     "error": f"Google API 오류: {response.status_code} - {response.text}",
+                    "content": None
+                }
+
+    async def _call_ollama(self, model: str, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
+        """Ollama API 호출"""
+        messages = []
+
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        messages.append({"role": "user", "content": prompt})
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.ollama_base_url}/api/chat",
+                headers={
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.1
+                    }
+                },
+                timeout=120.0
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "success": True,
+                    "content": data["message"]["content"],
+                    "model": model,
+                    "usage": {
+                        "prompt_tokens": data.get("prompt_eval_count", 0),
+                        "completion_tokens": data.get("eval_count", 0),
+                        "total_tokens": data.get("prompt_eval_count", 0) + data.get("eval_count", 0)
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Ollama API 오류: {response.status_code} - {response.text}",
                     "content": None
                 }
 

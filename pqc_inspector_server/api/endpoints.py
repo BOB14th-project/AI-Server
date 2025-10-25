@@ -50,5 +50,72 @@ async def get_analysis_report(
     result = await orchestrator.get_analysis_result(task_id)
     if result is None:
         raise HTTPException(status_code=404, detail="해당 ID의 분석 결과를 찾을 수 없거나, 아직 분석이 진행 중입니다.")
-    
+
     return result
+
+
+# --- 에이전트별 직접 분석 엔드포인트 (벤치마크용) ---
+from .schemas import AgentAnalysisResult
+from ..agents.source_code import SourceCodeAgent
+from ..agents.assembly_binary import AssemblyBinaryAgent
+from ..agents.logs_config import LogsConfigAgent
+
+
+@api_router.post("/analyze/source_code", response_model=AgentAnalysisResult)
+async def analyze_with_source_code_agent(
+    file: UploadFile = File(...)
+):
+    """
+    SourceCodeAgent를 직접 호출하여 소스코드 파일을 분석합니다.
+    오케스트레이터를 거치지 않고 순수 에이전트 성능을 측정할 수 있습니다.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="파일 이름이 없습니다.")
+
+    try:
+        file_content = await file.read()
+        agent = SourceCodeAgent()
+        result = await agent.analyze(file_content, file.filename)
+        return AgentAnalysisResult(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"분석 중 오류 발생: {str(e)}")
+
+
+@api_router.post("/analyze/assembly_binary", response_model=AgentAnalysisResult)
+async def analyze_with_assembly_binary_agent(
+    file: UploadFile = File(...)
+):
+    """
+    AssemblyBinaryAgent를 직접 호출하여 어셈블리/바이너리 파일을 분석합니다.
+    오케스트레이터를 거치지 않고 순수 에이전트 성능을 측정할 수 있습니다.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="파일 이름이 없습니다.")
+
+    try:
+        file_content = await file.read()
+        agent = AssemblyBinaryAgent()
+        result = await agent.analyze(file_content, file.filename)
+        return AgentAnalysisResult(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"분석 중 오류 발생: {str(e)}")
+
+
+@api_router.post("/analyze/logs_config", response_model=AgentAnalysisResult)
+async def analyze_with_logs_config_agent(
+    file: UploadFile = File(...)
+):
+    """
+    LogsConfigAgent를 직접 호출하여 로그/설정 파일을 분석합니다.
+    오케스트레이터를 거치지 않고 순수 에이전트 성능을 측정할 수 있습니다.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="파일 이름이 없습니다.")
+
+    try:
+        file_content = await file.read()
+        agent = LogsConfigAgent()
+        result = await agent.analyze(file_content, file.filename)
+        return AgentAnalysisResult(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"분석 중 오류 발생: {str(e)}")
