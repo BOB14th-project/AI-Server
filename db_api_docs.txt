@@ -1,0 +1,385 @@
+================================================================================
+LLM API DOCUMENTATION
+================================================================================
+
+Base URL: https://harper-abler-agape.ngrok-free.dev
+
+This API provides endpoints for managing LLM-related data including assembly 
+code, analysis results, generated code, and processing logs.
+
+================================================================================
+API ENDPOINTS OVERVIEW
+================================================================================
+
+POST ENDPOINTS (Create/Store Data):
+1. POST /files/{file_id}/llm/ - Create LLM Assembly
+2. POST /files/{file_id}/llm_analysis/ - Create LLM Analysis Result
+3. POST /files/{file_id}/llm_code/ - Create LLM Generated Code
+4. POST /files/{file_id}/llm_log/ - Create LLM Processing Log
+
+GET ENDPOINTS (Retrieve Data):
+5. GET /files/{file_id}/llm/ - Get LLM Assembly
+6. GET /files/{file_id}/llm_code/ - Get LLM Generated Code
+7. GET /files/{file_id}/llm_log/ - Get LLM Processing Logs
+
+================================================================================
+DETAILED ENDPOINT SPECIFICATIONS
+================================================================================
+
+--------------------------------------------------------------------------------
+1. POST /files/{file_id}/llm/
+--------------------------------------------------------------------------------
+Purpose: Store assembly text for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Request Body Schema:
+  {
+    "File_id": integer (required) - File identifier
+    "Scan_id": integer (required) - Scan identifier
+    "File_text": string (required) - Assembly code text content
+  }
+
+Request Body Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "File_text": "mov eax, ebx\nadd eax, 10"
+  }
+
+Response (200 OK):
+  {
+    "Analysis_id": integer - ID of the created analysis record
+  }
+
+Response Example:
+  {
+    "Analysis_id": 42
+  }
+
+cURL Example:
+  curl -X POST "https://harper-abler-agape.ngrok-free.dev/files/1/llm/" \
+    -H "Content-Type: application/json" \
+    -d '{"File_id": 1, "Scan_id": 1, "File_text": "mov eax, ebx"}'
+
+--------------------------------------------------------------------------------
+2. POST /files/{file_id}/llm_analysis/
+--------------------------------------------------------------------------------
+Purpose: Store LLM analysis results for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Request Body Schema:
+  {
+    "File_id": integer (required) - File identifier
+    "Scan_id": integer (required) - Scan identifier
+    "LLM_analysis": string (required) - Analysis result text
+  }
+
+Request Body Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "LLM_analysis": "This assembly code implements a basic addition operation. No security vulnerabilities detected."
+  }
+
+Response (200 OK):
+  {
+    "File_id": integer - File identifier
+    "Scan_id": integer - Scan identifier
+    "LLM_analysis": string - The stored analysis result
+  }
+
+Response Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "LLM_analysis": "This assembly code implements a basic addition operation. No security vulnerabilities detected."
+  }
+
+cURL Example:
+  curl -X POST "https://harper-abler-agape.ngrok-free.dev/files/1/llm_analysis/" \
+    -H "Content-Type: application/json" \
+    -d '{"File_id": 1, "Scan_id": 1, "LLM_analysis": "Analysis complete"}'
+
+--------------------------------------------------------------------------------
+3. POST /files/{file_id}/llm_code/
+--------------------------------------------------------------------------------
+Purpose: Store LLM-generated code for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Request Body Schema:
+  {
+    "File_id": integer (required) - File identifier
+    "Scan_id": integer (required) - Scan identifier
+    "Code": string (required) - Generated code content
+  }
+
+Request Body Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "Code": "def analyze_assembly(code):\n    return parse(code)"
+  }
+
+Response (200 OK):
+  {
+    "File_id": integer - File identifier
+    "Scan_id": integer - Scan identifier
+    "Code": string - The stored code
+  }
+
+Response Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "Code": "def analyze_assembly(code):\n    return parse(code)"
+  }
+
+cURL Example:
+  curl -X POST "https://harper-abler-agape.ngrok-free.dev/files/1/llm_code/" \
+    -H "Content-Type: application/json" \
+    -d '{"File_id": 1, "Scan_id": 1, "Code": "def main(): pass"}'
+
+--------------------------------------------------------------------------------
+4. POST /files/{file_id}/llm_log/
+--------------------------------------------------------------------------------
+Purpose: Store LLM processing logs for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Request Body Schema:
+  {
+    "File_id": integer (required) - File identifier
+    "Scan_id": integer (required) - Scan identifier
+    "Log": string (required) - Log content/message
+  }
+
+Request Body Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "Log": "Processing started at 2024-01-15 10:30:00\nAnalysis completed successfully\nExecution time: 2.5s"
+  }
+
+Response (200 OK):
+  {
+    "File_id": integer - File identifier
+    "Scan_id": integer - Scan identifier
+    "Log": string - The stored log
+  }
+
+Response Example:
+  {
+    "File_id": 1,
+    "Scan_id": 1,
+    "Log": "Processing started at 2024-01-15 10:30:00\nAnalysis completed successfully\nExecution time: 2.5s"
+  }
+
+cURL Example:
+  curl -X POST "https://harper-abler-agape.ngrok-free.dev/files/1/llm_log/" \
+    -H "Content-Type: application/json" \
+    -d '{"File_id": 1, "Scan_id": 1, "Log": "Process completed"}'
+
+--------------------------------------------------------------------------------
+5. GET /files/{file_id}/llm/
+--------------------------------------------------------------------------------
+Purpose: Retrieve stored assembly text for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Query Parameters:
+  - scan_id (integer, required): The scan ID to filter results
+
+Response (200 OK):
+  Returns an array of assembly text records
+  [
+    {
+      "File_text": string - Assembly code content
+    }
+  ]
+
+Response Example:
+  [
+    {
+      "File_text": "mov eax, ebx\nadd eax, 10"
+    }
+  ]
+
+cURL Example:
+  curl "https://harper-abler-agape.ngrok-free.dev/files/1/llm/?scan_id=1"
+
+--------------------------------------------------------------------------------
+6. GET /files/{file_id}/llm_code/
+--------------------------------------------------------------------------------
+Purpose: Retrieve stored LLM-generated code for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Query Parameters:
+  - scan_id (integer, required): The scan ID to filter results
+
+Response (200 OK):
+  Returns an array of code records
+  [
+    {
+      "Code": string - Generated code content
+    }
+  ]
+
+Response Example:
+  [
+    {
+      "Code": "def analyze_assembly(code):\n    return parse(code)"
+    }
+  ]
+
+cURL Example:
+  curl "https://harper-abler-agape.ngrok-free.dev/files/1/llm_code/?scan_id=1"
+
+--------------------------------------------------------------------------------
+7. GET /files/{file_id}/llm_log/
+--------------------------------------------------------------------------------
+Purpose: Retrieve stored LLM processing logs for a file
+
+Path Parameters:
+  - file_id (integer, required): The ID of the file
+
+Query Parameters:
+  - scan_id (integer, required): The scan ID to filter results
+
+Response (200 OK):
+  Returns an array of log records
+  [
+    {
+      "Log": string - Log content
+    }
+  ]
+
+Response Example:
+  [
+    {
+      "Log": "Processing started at 2024-01-15 10:30:00\nAnalysis completed successfully"
+    }
+  ]
+
+cURL Example:
+  curl "https://harper-abler-agape.ngrok-free.dev/files/1/llm_log/?scan_id=1"
+
+================================================================================
+TYPICAL WORKFLOW
+================================================================================
+
+1. Store Assembly Code:
+   POST /files/{file_id}/llm/
+   - Submit assembly text with File_id and Scan_id
+   - Receive Analysis_id in response
+
+2. Store Analysis Results:
+   POST /files/{file_id}/llm_analysis/
+   - Submit LLM analysis with File_id and Scan_id
+   - Receive confirmation with stored data
+
+3. Store Generated Code:
+   POST /files/{file_id}/llm_code/
+   - Submit generated code with File_id and Scan_id
+   - Receive confirmation with stored code
+
+4. Store Processing Logs:
+   POST /files/{file_id}/llm_log/
+   - Submit log messages with File_id and Scan_id
+   - Receive confirmation with stored log
+
+5. Retrieve Data:
+   GET /files/{file_id}/llm/?scan_id={scan_id}
+   GET /files/{file_id}/llm_code/?scan_id={scan_id}
+   GET /files/{file_id}/llm_log/?scan_id={scan_id}
+   - Query with file_id and scan_id to retrieve stored data
+
+================================================================================
+DATA RELATIONSHIPS
+================================================================================
+
+- File_id: Identifies the file being analyzed
+- Scan_id: Identifies a specific scan/analysis session
+- Multiple scans can be performed on the same file
+- Each scan can have:
+  * Assembly text (File_text)
+  * Analysis results (LLM_analysis)
+  * Generated code (Code)
+  * Processing logs (Log)
+
+================================================================================
+COMMON USE CASES
+================================================================================
+
+Use Case 1: Complete Analysis Workflow
+  1. POST assembly code to /files/1/llm/
+  2. POST analysis results to /files/1/llm_analysis/
+  3. POST generated code to /files/1/llm_code/
+  4. POST processing logs to /files/1/llm_log/
+  5. GET all data for review
+
+Use Case 2: Retrieve Historical Data
+  1. GET /files/{file_id}/llm/?scan_id={scan_id}
+  2. GET /files/{file_id}/llm_code/?scan_id={scan_id}
+  3. Review previous analysis results
+
+Use Case 3: Log Processing Steps
+  1. POST initial log entry
+  2. POST progress updates
+  3. POST completion status
+  4. GET complete log history
+
+================================================================================
+ERROR RESPONSES
+================================================================================
+
+422 Unprocessable Entity:
+  Returned when request validation fails
+  
+  Response Schema:
+  {
+    "detail": [
+      {
+        "loc": array - Location of the error
+        "msg": string - Error message
+        "type": string - Error type
+      }
+    ]
+  }
+
+Example:
+  {
+    "detail": [
+      {
+        "loc": ["body", "File_id"],
+        "msg": "field required",
+        "type": "value_error.missing"
+      }
+    ]
+  }
+
+================================================================================
+NOTES FOR AI SYSTEMS
+================================================================================
+
+1. All POST endpoints require File_id and Scan_id in the request body
+2. All GET endpoints require scan_id as a query parameter
+3. The file_id in the URL path must match the File_id in request body for POST
+4. GET endpoints return arrays, even if only one result exists
+5. Text fields (File_text, LLM_analysis, Code, Log) can contain multiline strings
+6. Use proper JSON escaping for newlines and special characters
+7. Response status 200 indicates successful operation
+8. Response status 422 indicates validation error
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================

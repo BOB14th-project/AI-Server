@@ -19,6 +19,9 @@ class BaseAgent(ABC):
         self.ai_service = get_ai_service()
         self.system_prompt = self._get_system_prompt()
         self.knowledge_manager: Optional[KnowledgeManager] = None
+
+        # 에이전트별 RAG 유사도 임계값 설정
+        self.rag_similarity_threshold = self._get_similarity_threshold()
     
     @abstractmethod
     def _get_system_prompt(self) -> str:
@@ -51,6 +54,19 @@ class BaseAgent(ABC):
             system_prompt=self.system_prompt
         )
     
+    def _get_similarity_threshold(self) -> float:
+        """
+        에이전트별 RAG 유사도 임계값을 반환합니다.
+        각 에이전트에서 override하여 최적의 임계값을 설정할 수 있습니다.
+        """
+        # 에이전트별 기본 임계값
+        thresholds = {
+            "source_code": 0.10,      # 평균 유사도가 높음 (0.103~0.361)
+            "assembly_binary": 0.15,  # 상향 조정: 0.05 → 0.15 (품질 향상, False Positive 감소)
+            "logs_config": 0.20       # 높은 임계값으로 관련 없는 컨텍스트 차단 (음수 유사도 방지)
+        }
+        return thresholds.get(self.agent_type, 0.10)  # 기본값 0.10
+
     async def _initialize_knowledge_manager(self):
         """
         지식 매니저를 초기화합니다. (지연 초기화)
@@ -59,9 +75,22 @@ class BaseAgent(ABC):
             from ..services.knowledge_manager import KnowledgeManagerFactory
             self.knowledge_manager = await KnowledgeManagerFactory.get_manager(self.agent_type)
 
-    async def _get_rag_context(self, content: str, top_k: int = 3) -> str:
+    async def _get_rag_context(
+        self,
+        content: str,
+        top_k: int = 3,
+        similarity_threshold: Optional[float] = None
+    ) -> str:
         """
         RAG 시스템에서 관련 컨텍스트를 검색합니다.
+
+        Args:
+            content: 검색할 쿼리 내용
+            top_k: 검색할 최대 문서 수
+            similarity_threshold: 유사도 임계값 (None이면 에이전트별 기본값 사용)
+
+        Returns:
+            포맷팅된 컨텍스트 문자열 (관련 컨텍스트가 없으면 빈 문자열)
         """
         try:
             await self._initialize_knowledge_manager()
@@ -73,16 +102,34 @@ class BaseAgent(ABC):
                 )
 
                 contexts = rag_result.get("contexts", [])
-                if contexts:
-                    # 컨텍스트를 문자열로 포맷팅
-                    context_text = "=== 전문가 지식 베이스 컨텍스트 ===\n"
-                    for i, ctx in enumerate(contexts):
-                        context_text += f"\n[참조 {i+1}] {ctx['category']} ({ctx['type']})\n"
-                        context_text += f"유사도: {ctx['similarity']:.3f}\n"
-                        context_text += f"내용: {ctx['content']}\n"
-                        context_text += f"출처: {ctx['source']}\n"
-                    context_text += "\n=== 컨텍스트 끝 ===\n"
-                    return context_text
+
+                # 유사도 임계값 적용 (None이면 에이전트별 기본값 사용)
+                threshold = similarity_threshold if similarity_threshold is not None else self.rag_similarity_threshold
+
+                # 유사도 필터링
+                filtered_contexts = [
+                    ctx for ctx in contexts
+                    if ctx.get('similarity', 0.0) >= threshold
+                ]
+
+                if not filtered_contexts:
+                    print(f"   ℹ️ 유사도 임계값({threshold:.2f}) 이상인 컨텍스트 없음")
+                    return ""
+
+                # 필터링된 컨텍스트 수 출력
+                filtered_count = len(contexts) - len(filtered_contexts)
+                if filtered_count > 0:
+                    print(f"   🔍 유사도 필터링: {len(contexts)}개 중 {filtered_count}개 제외됨 (임계값: {threshold:.2f})")
+
+                # 컨텍스트를 문자열로 포맷팅
+                context_text = "=== 전문가 지식 베이스 컨텍스트 ===\n"
+                for i, ctx in enumerate(filtered_contexts):
+                    context_text += f"\n[참조 {i+1}] {ctx['category']} ({ctx['type']})\n"
+                    context_text += f"유사도: {ctx['similarity']:.3f}\n"
+                    context_text += f"내용: {ctx['content']}\n"
+                    context_text += f"출처: {ctx['source']}\n"
+                context_text += "\n=== 컨텍스트 끝 ===\n"
+                return context_text
 
             return ""
 

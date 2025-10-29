@@ -1,0 +1,141 @@
+{
+  "description": "OpenSSH 설정 및 로그 패턴 - 양자 취약 알고리즘 탐지",
+  "source": "OpenSSH sshd_config manual, RFC 4253",
+  "config_patterns": [
+    {
+      "type": "config_pattern",
+      "category": "SSH_HostKeyAlgorithms",
+      "content": "sshd_config HostKeyAlgorithms: 'HostKeyAlgorithms ssh-rsa,ecdsa-sha2-nistp256,ssh-ed25519'. 서버가 제시할 호스트 키 알고리즘. ssh-rsa(RSA), ecdsa-sha2-*(ECDSA)는 양자 취약. ssh-ed25519도 양자 취약.",
+      "confidence": 1.0,
+      "source": "OpenSSH_sshd_config",
+      "keywords": ["HostKeyAlgorithms", "ssh-rsa", "ecdsa-sha2", "sshd_config"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_PubkeyAcceptedKeyTypes",
+      "content": "sshd_config PubkeyAcceptedKeyTypes (또는 PubkeyAcceptedAlgorithms): 'PubkeyAcceptedKeyTypes ssh-rsa,ecdsa-sha2-nistp256'. 공개키 인증에 허용할 키 타입. ssh-rsa, ecdsa-sha2-*, ssh-dss는 양자 취약.",
+      "confidence": 1.0,
+      "source": "OpenSSH_sshd_config",
+      "keywords": ["PubkeyAcceptedKeyTypes", "PubkeyAcceptedAlgorithms", "ssh-rsa", "ecdsa-sha2"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_KexAlgorithms",
+      "content": "sshd_config KexAlgorithms: 'KexAlgorithms diffie-hellman-group-exchange-sha256,ecdh-sha2-nistp256'. 키 교환 알고리즘. diffie-hellman-*(DH), ecdh-sha2-*(ECDH)는 양자 취약. curve25519-sha256도 양자 취약.",
+      "confidence": 1.0,
+      "source": "OpenSSH_sshd_config",
+      "keywords": ["KexAlgorithms", "diffie-hellman", "ecdh-sha2", "curve25519"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_Ciphers",
+      "content": "sshd_config Ciphers: 'Ciphers aes128-ctr,aes256-ctr,chacha20-poly1305@openssh.com'. 대칭키 암호화 알고리즘. AES, ChaCha20은 양자 안전 (대칭키). 하지만 키 교환/인증은 양자 취약.",
+      "confidence": 0.7,
+      "source": "OpenSSH_sshd_config",
+      "keywords": ["Ciphers", "aes128-ctr", "aes256-ctr", "chacha20"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_MACs",
+      "content": "sshd_config MACs: 'MACs hmac-sha2-256,hmac-sha2-512'. 메시지 인증 코드. SHA-2는 양자 안전 (해시 함수). 하지만 HMAC-MD5, HMAC-SHA1은 취약.",
+      "confidence": 0.7,
+      "source": "OpenSSH_sshd_config",
+      "keywords": ["MACs", "hmac-sha2", "hmac-md5"],
+      "severity": "low"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_Connection_Log",
+      "content": "SSH 연결 로그: 'Connection from 192.168.1.100 port 54321 on 10.0.0.1 port 22', 'Accepted publickey for user from 192.168.1.100'. /var/log/auth.log나 /var/log/secure에 기록. 연결 시작과 인증 성공 로그.",
+      "confidence": 0.9,
+      "source": "OpenSSH_auth_logs",
+      "keywords": ["Connection from", "Accepted publickey", "port 22"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_HostKey_Log",
+      "content": "SSH 호스트 키 로그: 'Server host key: ssh-rsa SHA256:...', 'Server listening on :: port 22 using ssh-rsa host key'. 서버가 사용하는 호스트 키 알고리즘 기록. ssh-rsa, ecdsa-sha2 탐지.",
+      "confidence": 0.95,
+      "source": "OpenSSH_logs",
+      "keywords": ["Server host key:", "ssh-rsa", "ecdsa-sha2", "ssh-ed25519"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_Authentication_Method",
+      "content": "SSH 인증 방식 로그: 'Accepted publickey for user from 192.168.1.100 port 54321 ssh2: RSA SHA256:...', 'User authentication method: publickey (ssh-rsa)'. 사용된 키 타입 기록. ssh-rsa, ecdsa-sha2 탐지.",
+      "confidence": 0.95,
+      "source": "OpenSSH_auth_logs",
+      "keywords": ["publickey", "ssh2:", "RSA", "ECDSA"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_Key_Exchange_Log",
+      "content": "SSH 키 교환 로그: 'Kex: client->server cipher: aes128-ctr MAC: hmac-sha2-256', 'KEX method: ecdh-sha2-nistp256'. 디버그 모드(-vvv)에서 기록. 키 교환 알고리즘과 cipher 탐지.",
+      "confidence": 0.85,
+      "source": "OpenSSH_debug_logs",
+      "keywords": ["Kex:", "KEX method:", "client->server", "ecdh-sha2", "diffie-hellman"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_Failed_Authentication",
+      "content": "SSH 인증 실패 로그: 'Failed publickey for user from 192.168.1.100', 'Connection closed by authenticating user user 192.168.1.100 port 54321'. 공개키 인증 실패나 연결 종료.",
+      "confidence": 0.9,
+      "source": "OpenSSH_auth_logs",
+      "keywords": ["Failed publickey", "Connection closed", "authenticating user"],
+      "severity": "warning"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_DSS_Deprecated",
+      "content": "ssh-dss (DSA) 알고리즘: OpenSSH 7.0+에서 기본적으로 비활성화됨. 1024-bit 키 길이 제한과 약한 보안. 레거시 시스템에서만 사용. 설정: 'PubkeyAcceptedKeyTypes +ssh-dss'. 절대 사용 금지.",
+      "confidence": 1.0,
+      "source": "OpenSSH_deprecated",
+      "keywords": ["ssh-dss", "DSA", "+ssh-dss"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_RSA_SHA1_Deprecated",
+      "content": "ssh-rsa with SHA-1: OpenSSH 8.8+에서 기본 비활성화. SHA-1 해시 충돌 취약. 'PubkeyAcceptedAlgorithms +ssh-rsa'로 재활성화 가능하지만 비권장. rsa-sha2-256, rsa-sha2-512 권장 (하지만 여전히 RSA 사용).",
+      "confidence": 0.95,
+      "source": "OpenSSH_8.8_release",
+      "keywords": ["ssh-rsa", "SHA-1", "rsa-sha2-256", "rsa-sha2-512"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_ECDSA_Curves",
+      "content": "ECDSA 곡선: ecdsa-sha2-nistp256 (P-256), ecdsa-sha2-nistp384 (P-384), ecdsa-sha2-nistp521 (P-521). NIST P-curve 기반 타원곡선. 모두 양자 취약. 로그: 'ecdsa-sha2-nistp256 SHA256:...'",
+      "confidence": 1.0,
+      "source": "OpenSSH_ECDSA",
+      "keywords": ["ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "P-256", "P-384"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SSH_Ed25519",
+      "content": "ssh-ed25519 알고리즘: Curve25519 기반 EdDSA 서명. RSA/ECDSA보다 빠르고 안전하지만 여전히 양자 취약. OpenSSH 6.5+에서 지원. 설정: 'HostKeyAlgorithms ssh-ed25519'.",
+      "confidence": 0.9,
+      "source": "OpenSSH_Ed25519",
+      "keywords": ["ssh-ed25519", "Curve25519", "EdDSA"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSH_Certificate_Log",
+      "content": "SSH 인증서 로그: 'Accepted cert-authority for user from 192.168.1.100', 'Accepting certificate ID \"user-cert\" signed by RSA CA'. SSH 인증서 기반 인증. CA 키가 RSA/ECDSA면 양자 취약.",
+      "confidence": 0.85,
+      "source": "OpenSSH_cert_logs",
+      "keywords": ["cert-authority", "certificate ID", "signed by RSA", "signed by ECDSA"],
+      "severity": "high"
+    }
+  ]
+}

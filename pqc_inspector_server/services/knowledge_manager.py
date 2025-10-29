@@ -2,6 +2,7 @@
 # 📚 각 에이전트별 지식 베이스를 관리하고 검색하는 서비스입니다.
 
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 from .vector_store import VectorStore
 from .embedding_service import EmbeddingService, get_embedding_service
 import os
@@ -86,56 +87,166 @@ class KnowledgeManager:
         return False
 
     async def _load_json_knowledge(self) -> List[Dict[str, Any]]:
-        """JSON 파일들에서 지식을 로드합니다."""
+        """
+        JSON 파일들에서 지식을 로드합니다.
+        에이전트별 디렉토리와 common 디렉토리를 모두 로드합니다.
+        """
         import json
         import os
         from pathlib import Path
 
         knowledge_data = []
-        json_dir = Path(self.knowledge_base_path)
 
-        if not json_dir.exists():
-            os.makedirs(json_dir, exist_ok=True)
-            return knowledge_data
+        # 1. 에이전트별 디렉토리 로드
+        agent_dir = Path(self.knowledge_base_path)
+        if agent_dir.exists():
+            agent_knowledge = await self._load_from_directory(agent_dir, "agent")
+            knowledge_data.extend(agent_knowledge)
+        else:
+            os.makedirs(agent_dir, exist_ok=True)
 
-        # JSON 파일들 찾기
-        for json_file in json_dir.glob("*.json"):
+        # 2. common 디렉토리 로드 (모든 에이전트가 공유)
+        common_dir = Path("data/rag_knowledge_base/common")
+        if common_dir.exists():
+            common_knowledge = await self._load_from_directory(common_dir, "common")
+            knowledge_data.extend(common_knowledge)
+            print(f"✅ common 디렉토리 로드 완료: {len(common_knowledge)}개 항목")
+
+        return knowledge_data
+
+    async def _load_from_directory(
+        self,
+        directory: Path,
+        source_type: str
+    ) -> List[Dict[str, Any]]:
+        """특정 디렉토리에서 JSON 파일들을 로드합니다."""
+        import json
+
+        knowledge_data = []
+
+        for json_file in directory.glob("*.json"):
             try:
                 with open(json_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
 
-                # 데이터 구조에 따라 처리
-                items = []
-                if 'patterns' in data:
-                    items = data['patterns']
-                elif 'signatures' in data:
-                    items = data['signatures']
-                elif 'config_patterns' in data:
-                    items = data['config_patterns']
-                elif 'log_patterns' in data:
-                    items = data['log_patterns']
-                elif isinstance(data, list):
-                    items = data
-                else:
-                    items = [data]
+                # 파일별 로드된 아이템 수
+                loaded_items = self._parse_json_data(data, json_file.stem, source_type)
+                knowledge_data.extend(loaded_items)
 
-                # 각 아이템을 표준 형식으로 변환
-                for item in items:
-                    if isinstance(item, dict) and 'content' in item:
-                        knowledge_data.append({
-                            "type": item.get("type", "knowledge"),
-                            "category": item.get("category", "general"),
-                            "content": item["content"],
-                            "confidence": item.get("confidence", 0.8),
-                            "source": f"json_{json_file.stem}"
-                        })
-
-                print(f"✅ JSON 파일 로드됨: {json_file.name} ({len(items)}개 항목)")
+                if loaded_items:
+                    print(f"✅ JSON 파일 로드됨: {json_file.name} ({len(loaded_items)}개 항목)")
 
             except Exception as e:
                 print(f"❌ JSON 파일 로드 실패 {json_file.name}: {e}")
 
         return knowledge_data
+
+    def _parse_json_data(
+        self,
+        data: Dict[str, Any],
+        file_stem: str,
+        source_type: str
+    ) -> List[Dict[str, Any]]:
+        """
+        JSON 데이터를 파싱하여 표준 형식으로 변환합니다.
+        다양한 JSON 구조를 지원합니다.
+        """
+        knowledge_items = []
+
+        # 1. 기존 패턴 형식 (patterns, signatures, etc.)
+        items = []
+        if 'patterns' in data:
+            items = data['patterns']
+        elif 'signatures' in data:
+            items = data['signatures']
+        elif 'config_patterns' in data:
+            items = data['config_patterns']
+        elif 'log_patterns' in data:
+            items = data['log_patterns']
+        elif 'constants' in data:
+            items = data['constants']
+        elif isinstance(data, list):
+            items = data
+
+        # 표준 형식으로 변환
+        for item in items:
+            if isinstance(item, dict) and 'content' in item:
+                knowledge_items.append({
+                    "type": item.get("type", "knowledge"),
+                    "category": item.get("category", "general"),
+                    "content": item["content"],
+                    "confidence": item.get("confidence", 0.8),
+                    "source": f"{source_type}_{file_stem}"
+                })
+
+        # 2. detailed_structure 형식 (common 디렉토리의 RSA, ECDSA 등)
+        if 'detailed_structure' in data and isinstance(data['detailed_structure'], list):
+            algorithm = data.get('algorithm', 'unknown')
+            is_quantum_vulnerable = data.get('quantum_vulnerable', True)
+
+            for component in data['detailed_structure']:
+                if not isinstance(component, dict):
+                    continue
+
+                component_name = component.get('component', 'unknown')
+
+                # code_patterns 추출
+                if 'code_patterns' in component:
+                    code_patterns = component['code_patterns']
+
+                    # source_code 패턴
+                    if 'source_code' in code_patterns and isinstance(code_patterns['source_code'], list):
+                        source_content = f"{algorithm} {component_name} source code patterns: " + \
+                                       ", ".join(code_patterns['source_code'][:5])
+                        knowledge_items.append({
+                            "type": "detailed_pattern",
+                            "category": f"{algorithm}_{component_name}",
+                            "content": source_content,
+                            "confidence": 0.9,
+                            "source": f"{source_type}_{file_stem}_source"
+                        })
+
+                    # assembly 패턴
+                    if 'assembly' in code_patterns and isinstance(code_patterns['assembly'], list):
+                        assembly_content = f"{algorithm} {component_name} assembly patterns: " + \
+                                         ", ".join(code_patterns['assembly'][:5])
+                        knowledge_items.append({
+                            "type": "detailed_pattern",
+                            "category": f"{algorithm}_{component_name}_asm",
+                            "content": assembly_content,
+                            "confidence": 0.9,
+                            "source": f"{source_type}_{file_stem}_assembly"
+                        })
+
+                # detection_indicators 추출
+                if 'detection_indicators' in component and isinstance(component['detection_indicators'], list):
+                    indicators_content = f"{algorithm} {component_name} detection indicators: " + \
+                                       ", ".join(component['detection_indicators'][:5])
+                    knowledge_items.append({
+                        "type": "detection_indicator",
+                        "category": f"{algorithm}_{component_name}_detection",
+                        "content": indicators_content,
+                        "confidence": 0.85,
+                        "source": f"{source_type}_{file_stem}_indicators"
+                    })
+
+        # 3. 단일 객체인 경우 (fallback)
+        if not items and 'detailed_structure' not in data and isinstance(data, dict):
+            # algorithm 필드가 있으면 알고리즘 설명으로 처리
+            if 'algorithm' in data:
+                algorithm = data.get('algorithm', 'unknown')
+                description = data.get('shor_algorithm_impact', '') or \
+                            data.get('description', '') or \
+                            f"{algorithm} cryptographic algorithm"
+                knowledge_items.append({
+                    "type": "algorithm_info",
+                    "category": algorithm,
+                    "content": description,
+                    "confidence": 0.7,
+                    "source": f"{source_type}_{file_stem}"
+                })
+
+        return knowledge_items
 
     def _get_default_knowledge_for_agent(self) -> List[Dict[str, Any]]:
         """

@@ -32,19 +32,33 @@ class LogsConfigAgent(BaseAgent):
 
     async def analyze(self, file_content: bytes, file_name: str) -> Dict[str, Any]:
         print(f"LogConfAgent: '{file_name}' 파일 분석 중...")
-        
+
         try:
             content_text = self._parse_file_content(file_content)
 
-            # RAG 컨텍스트 검색
-            print(f"   🧠 RAG 컨텍스트 검색 중...")
+            # RAG 재활성화 (높은 임계값 0.20으로 관련 없는 컨텍스트 차단)
+            print(f"   🧠 RAG 컨텍스트 검색 중 (임계값: 0.20)...")
             rag_context = await self._get_rag_context(content_text[:1000], top_k=3)
 
-            prompt = f"""다음 로그/설정 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
+            # RAG 컨텍스트가 있으면 포함, 없으면 순수 LLM 판단
+            if rag_context:
+                prompt = f"""다음 로그/설정 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
 
 {rag_context}
 
-위의 전문가 지식을 바탕으로 다음 로그/설정을 분석하세요:
+위의 전문가 지식을 참고하여 다음 로그/설정을 분석하세요:
+
+파일명: {file_name}
+내용:
+```
+{content_text[:2000]}  # 처음 2000자만 분석
+```
+
+JSON 형식으로만 응답해주세요."""
+            else:
+                # 유사도 임계값 이상인 컨텍스트가 없으면 순수 LLM 판단
+                print(f"   ℹ️ 관련 컨텍스트 없음, 순수 LLM 분석 진행")
+                prompt = f"""다음 로그/설정 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
 
 파일명: {file_name}
 내용:

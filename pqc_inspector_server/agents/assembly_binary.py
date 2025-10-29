@@ -36,21 +36,35 @@ class AssemblyBinaryAgent(BaseAgent):
             # 바이너리 파일의 경우 헥스 덤프 또는 문자열 추출
             content_text = self._extract_strings_from_binary(file_content)
 
-            # RAG 컨텍스트 검색
+            # RAG 컨텍스트 검색 (개선: top_k=2, 길이 1500자)
             print(f"   🧠 RAG 컨텍스트 검색 중...")
-            rag_context = await self._get_rag_context(content_text[:1000], top_k=3)
+            rag_context = await self._get_rag_context(content_text[:1500], top_k=2)
 
-            prompt = f"""다음 바이너리 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
+            # 조건부 RAG 사용: 컨텍스트가 의미있을 때만 포함
+            if rag_context and "관련 지식이 없습니다" not in rag_context:
+                context_hint = f"""
+[참고용 암호화 패턴 힌트]
+다음은 일반적인 암호화 패턴의 예시입니다. 이는 참고만 하고, 실제 바이너리 내용을 직접 분석하여 판단하세요:
 
 {rag_context}
 
-위의 전문가 지식을 바탕으로 다음 바이너리를 분석하세요:
+---
+"""
+            else:
+                context_hint = ""
 
+            prompt = f"""다음 바이너리 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
+
+{context_hint}
+[분석 대상 바이너리]
 파일명: {file_name}
 추출된 문자열:
 ```
-{content_text[:1500]}  # 처음 1500자만 분석
+{content_text[:3000]}  # 처음 3000자 분석 (확장됨)
 ```
+
+중요: 위의 힌트는 참고만 하고, 실제 바이너리 문자열을 직접 분석하여 암호화 알고리즘 사용 여부를 판단하세요.
+발견된 문자열이 실제로 암호화 알고리즘과 관련이 있는지 신중히 평가하세요.
 
 JSON 형식으로만 응답해주세요."""
 
@@ -81,25 +95,40 @@ JSON 형식으로만 응답해주세요."""
             return self._get_default_result(file_name, f"분석 오류: {str(e)}")
 
     def _extract_strings_from_binary(self, file_content: bytes) -> str:
-        """바이너리에서 의미있는 문자열을 추출합니다."""
+        """
+        바이너리에서 의미있는 문자열을 추출합니다.
+
+        스캔 범위 확장:
+        - 바이너리 스캔: 5KB → 50KB
+        - 최대 문자열 수: 50개 → 200개
+        """
         try:
             # 출력 가능한 ASCII 문자열 추출 (최소 길이 4)
             strings = []
             current_string = ""
-            
-            for byte in file_content[:5000]:  # 처음 5KB만 분석
+
+            # 스캔 범위 확장: 5KB → 50KB
+            scan_size = min(len(file_content), 50000)
+
+            for byte in file_content[:scan_size]:
                 if 32 <= byte <= 126:  # 출력 가능한 ASCII
                     current_string += chr(byte)
                 else:
                     if len(current_string) >= 4:
                         strings.append(current_string)
                     current_string = ""
-            
+
             if len(current_string) >= 4:
                 strings.append(current_string)
-                
-            return "\n".join(strings[:50])  # 최대 50개 문자열
-            
+
+            # 최대 문자열 수 확장: 50개 → 200개
+            result = "\n".join(strings[:200])
+
+            # 통계 출력
+            print(f"   📊 바이너리 스캔 완료: {scan_size:,}바이트, {len(strings)}개 문자열 추출 (상위 200개 사용)")
+
+            return result
+
         except Exception as e:
             return f"문자열 추출 실패: {str(e)}"
 

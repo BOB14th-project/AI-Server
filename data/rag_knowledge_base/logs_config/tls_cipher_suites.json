@@ -1,0 +1,285 @@
+{
+  "description": "IANA TLS Cipher Suite Registry - 양자 취약 cipher suites",
+  "source": "https://www.iana.org/assignments/tls-parameters/",
+  "log_patterns": [
+    {
+      "type": "config_pattern",
+      "category": "TLS_RSA_KeyExchange",
+      "content": "TLS cipher suite with RSA key exchange: TLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA. RSA 키 교환은 양자 컴퓨터에 취약합니다. 로그나 설정에서 'TLS_RSA_WITH_' 패턴을 탐지해야 합니다.",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_RSA_WITH_", "RSA key exchange"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_RSA_AES128_GCM",
+      "content": "TLS_RSA_WITH_AES_128_GCM_SHA256 (0x009C): RSA 키 교환과 AES-GCM 암호화. RSA 키 교환이 양자 취약. 설정 파일이나 handshake 로그에서 '0x009C' 또는 'TLS_RSA_WITH_AES_128_GCM_SHA256' 탐지.",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_RSA_WITH_AES_128_GCM_SHA256", "0x009C"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_RSA_AES256_GCM",
+      "content": "TLS_RSA_WITH_AES_256_GCM_SHA384 (0x009D): RSA 키 교환과 AES-256-GCM. RSA 키 교환이 양자 취약. 로그: 'Cipher: TLS_RSA_WITH_AES_256_GCM_SHA384'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_RSA_WITH_AES_256_GCM_SHA384", "0x009D"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_RSA",
+      "content": "TLS_ECDHE_RSA_WITH_* cipher suites: ECDHE 키 교환 + RSA 서명. 예: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (0xC02F). RSA 서명이 양자 취약. 매우 흔하게 사용되는 cipher suite.",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_RSA_WITH_", "ECDHE-RSA"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_RSA_AES128_GCM",
+      "content": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (0xC02F): 가장 널리 사용되는 cipher suite 중 하나. ECDHE 키 교환으로 Perfect Forward Secrecy 제공하지만 RSA 인증서 서명이 양자 취약. 로그: 'SSL: TLSv1.2, cipher: ECDHE-RSA-AES128-GCM-SHA256'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "0xC02F", "ECDHE-RSA-AES128-GCM-SHA256"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_RSA_AES256_GCM",
+      "content": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (0xC030): ECDHE + RSA + AES-256-GCM. 강력한 대칭키 암호화를 사용하지만 RSA 서명이 양자 취약. 로그 패턴: 'Cipher suite: ECDHE-RSA-AES256-GCM-SHA384'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "0xC030", "ECDHE-RSA-AES256-GCM-SHA384"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_RSA_CHACHA20",
+      "content": "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 (0xCCA8): ChaCha20 암호화 + RSA 서명. 모바일에 최적화. RSA 서명이 양자 취약. 로그: 'cipher: ECDHE-RSA-CHACHA20-POLY1305'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "0xCCA8", "CHACHA20-POLY1305"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_ECDSA",
+      "content": "TLS_ECDHE_ECDSA_WITH_* cipher suites: ECDHE 키 교환 + ECDSA 서명. 예: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 (0xC02B). ECDSA 서명이 양자 취약. 로그: 'cipher: ECDHE-ECDSA-AES128-GCM-SHA256'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_ECDSA_WITH_", "ECDHE-ECDSA"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_ECDSA_AES128_GCM",
+      "content": "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 (0xC02B): ECDSA 인증서를 사용하는 cipher suite. ECDHE + ECDSA 모두 타원곡선 기반이므로 양자 취약. 로그 패턴: 'SSL cipher: ECDHE-ECDSA-AES128-GCM-SHA256'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "0xC02B"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_ECDSA_AES256_GCM",
+      "content": "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 (0xC02C): ECDSA + AES-256-GCM. ECDSA 서명이 양자 취약. 로그: 'TLS 1.2, cipher: ECDHE-ECDSA-AES256-GCM-SHA384'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "0xC02C"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_ECDHE_ECDSA_CHACHA20",
+      "content": "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 (0xCCA9): ECDSA + ChaCha20. ECDSA 서명이 양자 취약. 설정: 'ssl_ciphers ECDHE-ECDSA-CHACHA20-POLY1305'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305", "0xCCA9"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_DHE_RSA",
+      "content": "TLS_DHE_RSA_WITH_* cipher suites: DHE 키 교환 + RSA 서명. 예: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 (0x009E). DHE와 RSA 모두 양자 취약. 로그: 'cipher: DHE-RSA-AES128-GCM-SHA256'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_DHE_RSA_WITH_", "DHE-RSA"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_DHE_DSS",
+      "content": "TLS_DHE_DSS_WITH_* cipher suites: DHE + DSS 서명. DSS는 DSA(Digital Signature Algorithm) 기반으로 양자 취약. 로그: 'cipher: DHE-DSS-AES256-SHA'",
+      "confidence": 1.0,
+      "source": "IANA_TLS_Registry",
+      "keywords": ["TLS_DHE_DSS_WITH_", "DHE-DSS"],
+      "severity": "critical"
+    },
+    {
+      "type": "log_pattern",
+      "category": "TLS_Handshake_CipherSuite",
+      "content": "TLS handshake 로그의 cipher suite 필드: 'Selected cipher suite: 0xC02F' 또는 'Negotiated cipher: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'. 16진수 코드(0x)나 전체 이름으로 기록됨.",
+      "confidence": 0.9,
+      "source": "TLS_handshake_logs",
+      "keywords": ["Selected cipher suite", "Negotiated cipher", "0x"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "TLS_Version_Log",
+      "content": "TLS 버전 로그: 'SSL Protocol: TLSv1.2', 'TLS version: TLS 1.3'. TLS 1.2는 레거시 cipher suites를 허용할 수 있어 주의 필요. TLS 1.3은 RSA 키 교환을 제거했지만 RSA 인증서는 여전히 사용.",
+      "confidence": 0.85,
+      "source": "TLS_protocol_logs",
+      "keywords": ["SSL Protocol", "TLS version", "TLSv1.2", "TLSv1.3"],
+      "severity": "info"
+    },
+    {
+      "type": "config_pattern",
+      "category": "OpenSSL_Cipher_String",
+      "content": "OpenSSL cipher string 형식: 'HIGH:!aNULL:!MD5', 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256'. 콜론(:)으로 구분된 cipher suite 목록. 'ECDHE-RSA', 'ECDHE-ECDSA', 'DHE-RSA' 패턴은 양자 취약.",
+      "confidence": 0.95,
+      "source": "OpenSSL_docs",
+      "keywords": ["HIGH", "!aNULL", "cipher string", ":"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS13_Removed_RSA",
+      "content": "TLS 1.3에서 제거된 것: RSA 키 교환, Static DH, CBC 모드 cipher suites. TLS 1.3은 ECDHE만 지원하므로 Perfect Forward Secrecy 필수. 하지만 RSA 인증서는 여전히 사용 가능하며 양자 취약.",
+      "confidence": 0.9,
+      "source": "RFC_8446_TLS13",
+      "keywords": ["TLS 1.3", "removed RSA", "ECDHE only"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSL_Error_Weak_Cipher",
+      "content": "약한 cipher suite 오류 로그: 'SSL error: weak cipher', 'Cipher suite negotiation failed: no common cipher'. 클라이언트와 서버 간 cipher suite 협상 실패 시 기록.",
+      "confidence": 0.8,
+      "source": "SSL_error_logs",
+      "keywords": ["SSL error", "weak cipher", "negotiation failed"],
+      "severity": "warning"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Legacy_3DES_RC4",
+      "content": "레거시 cipher suites: TLS_RSA_WITH_3DES_EDE_CBC_SHA (0x000A), TLS_RSA_WITH_RC4_128_SHA (0x0005). 3DES와 RC4는 약한 암호화 + RSA 키 교환. 절대 사용 금지. 로그: 'cipher: DES-CBC3-SHA', 'cipher: RC4-SHA'",
+      "confidence": 1.0,
+      "source": "IANA_deprecated",
+      "keywords": ["3DES", "RC4", "DES-CBC3", "RC4-SHA"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_NULL_Cipher",
+      "content": "NULL 암호화 cipher suites: TLS_RSA_WITH_NULL_SHA (0x0002). 암호화 없이 인증만 수행. 절대 사용 금지. 설정: 'cipher: NULL-SHA'",
+      "confidence": 1.0,
+      "source": "IANA_insecure",
+      "keywords": ["NULL-SHA", "NULL cipher", "TLS_RSA_WITH_NULL"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_Export_Cipher",
+      "content": "Export-grade cipher suites: TLS_RSA_EXPORT_* (40-bit 또는 56-bit 키). 미국 수출 규제 시대의 약한 암호화. FREAK, Logjam 공격에 취약. 절대 사용 금지.",
+      "confidence": 1.0,
+      "source": "IANA_export",
+      "keywords": ["EXPORT", "EXP-", "40-bit", "56-bit"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_Anonymous_DH",
+      "content": "익명 DH cipher suites: TLS_DH_anon_* (0x0018, 0x0019). 인증 없이 키 교환만 수행하여 MITM 공격에 취약. OpenSSL 설정에서 '!aNULL'로 비활성화. 로그: 'cipher: ADH-'",
+      "confidence": 1.0,
+      "source": "IANA_anonymous",
+      "keywords": ["DH_anon", "ADH-", "!aNULL", "anonymous"],
+      "severity": "critical"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_CBC_Mode",
+      "content": "CBC 모드 cipher suites: TLS_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA. CBC는 BEAST, Lucky13 공격에 취약. GCM 모드 권장. 로그: 'cipher: AES128-CBC-SHA', 'cipher: AES256-CBC-SHA'",
+      "confidence": 0.9,
+      "source": "TLS_CBC_attacks",
+      "keywords": ["CBC", "AES128-CBC", "AES256-CBC"],
+      "severity": "medium"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_PSK",
+      "content": "Pre-Shared Key (PSK) cipher suites: TLS_PSK_WITH_AES_128_GCM_SHA256. IoT 디바이스에서 사용. PSK 자체는 양자 안전하지만 PSK-RSA, PSK-ECDHE 변형은 양자 취약. 로그: 'cipher: PSK-AES128-GCM-SHA256'",
+      "confidence": 0.85,
+      "source": "IANA_PSK",
+      "keywords": ["PSK", "Pre-Shared Key", "TLS_PSK"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "TLS_SRP",
+      "content": "Secure Remote Password (SRP) cipher suites: TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA. 패스워드 기반 인증. RSA 변형은 양자 취약. 드물게 사용됨.",
+      "confidence": 0.7,
+      "source": "IANA_SRP",
+      "keywords": ["SRP", "TLS_SRP", "Secure Remote Password"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Perfect_Forward_Secrecy",
+      "content": "Perfect Forward Secrecy (PFS) 로그: 'PFS: enabled', 'Ephemeral key: ECDHE'. ECDHE, DHE는 PFS를 제공하지만 양자 취약. TLS_RSA_* cipher suites는 PFS 미제공. 로그에서 'ephemeral', 'ECDHE', 'DHE' 키워드 탐지.",
+      "confidence": 0.85,
+      "source": "PFS_logs",
+      "keywords": ["Perfect Forward Secrecy", "PFS", "ephemeral", "ECDHE"],
+      "severity": "info"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Mozilla_Modern_Profile",
+      "content": "Mozilla SSL Configuration Generator - Modern profile: TLS 1.3만 사용, cipher suites: TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256. RSA/ECDSA 인증서는 여전히 사용하므로 양자 취약.",
+      "confidence": 0.95,
+      "source": "Mozilla_SSL_Config",
+      "keywords": ["Mozilla", "Modern", "TLS 1.3 only"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Mozilla_Intermediate_Profile",
+      "content": "Mozilla Intermediate profile: TLS 1.2+, cipher suites: ECDHE-ECDSA-AES128-GCM-SHA256, ECDHE-RSA-AES128-GCM-SHA256 등. 가장 널리 사용되는 프로파일. 모두 양자 취약.",
+      "confidence": 0.95,
+      "source": "Mozilla_SSL_Config",
+      "keywords": ["Mozilla", "Intermediate", "TLS 1.2"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Cipher_Preference_Order",
+      "content": "Cipher suite 우선순위 로그: 'Server cipher order: preferred', 'Client cipher preference'. 서버가 cipher suite 순서를 결정하면 보안 향상. 로그: 'ssl_prefer_server_ciphers on'",
+      "confidence": 0.8,
+      "source": "TLS_config_logs",
+      "keywords": ["cipher order", "prefer server ciphers", "cipher preference"],
+      "severity": "info"
+    },
+    {
+      "type": "config_pattern",
+      "category": "NIST_Approved_Ciphers",
+      "content": "NIST SP 800-52 Rev.2 승인 cipher suites: TLS 1.2 이상, AES-GCM 또는 ChaCha20-Poly1305, ECDHE 또는 DHE. RSA 키 교환 금지. 하지만 ECDHE, DHE, RSA/ECDSA 서명은 양자 취약.",
+      "confidence": 0.9,
+      "source": "NIST_SP800_52",
+      "keywords": ["NIST", "SP 800-52", "approved ciphers"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "SSL_Session_Resumption",
+      "content": "SSL/TLS 세션 재개 로그: 'Session-ID reused', 'Session ticket resumption'. 세션 재개는 성능 향상하지만 세션 키 보호 중요. 로그: 'SSL session reused: yes'",
+      "confidence": 0.75,
+      "source": "TLS_session_logs",
+      "keywords": ["Session reused", "session ticket", "resumption"],
+      "severity": "info"
+    }
+  ]
+}
