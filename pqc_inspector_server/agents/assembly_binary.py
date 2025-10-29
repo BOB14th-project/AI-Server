@@ -79,6 +79,16 @@ JSON 형식으로만 응답해주세요."""
                     if json_start >= 0 and json_end > json_start:
                         json_text = response_text[json_start:json_end]
                         result = json.loads(json_text)
+
+                        # evidence가 문자열인지 확인
+                        if "evidence" in result and not isinstance(result["evidence"], str):
+                            print(f"   ⚠️ evidence가 문자열이 아님: {type(result['evidence'])}")
+                            # 리스트면 줄바꿈으로 결합
+                            if isinstance(result["evidence"], list):
+                                result["evidence"] = "\n".join(str(item) for item in result["evidence"])
+                            else:
+                                result["evidence"] = str(result["evidence"])
+
                         return result
                     else:
                         raise ValueError("JSON 형식을 찾을 수 없음")

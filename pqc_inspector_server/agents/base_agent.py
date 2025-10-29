@@ -59,13 +59,13 @@ class BaseAgent(ABC):
         에이전트별 RAG 유사도 임계값을 반환합니다.
         각 에이전트에서 override하여 최적의 임계값을 설정할 수 있습니다.
         """
-        # 에이전트별 기본 임계값
+        # 에이전트별 기본 임계값 (낮춰서 더 많은 컨텍스트 활용)
         thresholds = {
-            "source_code": 0.10,      # 평균 유사도가 높음 (0.103~0.361)
-            "assembly_binary": 0.15,  # 상향 조정: 0.05 → 0.15 (품질 향상, False Positive 감소)
-            "logs_config": 0.20       # 높은 임계값으로 관련 없는 컨텍스트 차단 (음수 유사도 방지)
+            "source_code": 0.05,      # 0.10 → 0.05
+            "assembly_binary": 0.08,  # 0.15 → 0.08
+            "logs_config": 0.10       # 0.20 → 0.10 (대폭 감소)
         }
-        return thresholds.get(self.agent_type, 0.10)  # 기본값 0.10
+        return thresholds.get(self.agent_type, 0.05)  # 기본값 0.05
 
     async def _initialize_knowledge_manager(self):
         """

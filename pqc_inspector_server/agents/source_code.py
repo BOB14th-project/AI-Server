@@ -67,11 +67,11 @@ You MUST respond ONLY with valid JSON in exactly this format:
 
 Do not include any explanation or text outside the JSON."""
 
-            print(f"   🤖 CodeLlama 모델 호출 준비 중...")
+            print(f"   🤖 {self.model_name} 모델 호출 준비 중...")
             llm_response = await self._call_llm(prompt)
-            
+
             if llm_response.get("success"):
-                print(f"   ✅ CodeLlama 응답 수신 완료")
+                print(f"   ✅ {self.model_name} 응답 수신 완료")
                 try:
                     # LLM 응답에서 JSON 추출 시도
                     response_text = llm_response["content"]
@@ -100,6 +100,16 @@ Do not include any explanation or text outside the JSON."""
                             json_text = re.sub(r'\s+', ' ', json_text)
                             
                             result = json.loads(json_text)
+
+                            # evidence가 문자열인지 확인
+                            if "evidence" in result and not isinstance(result["evidence"], str):
+                                print(f"   ⚠️ evidence가 문자열이 아님: {type(result['evidence'])}")
+                                # 리스트면 줄바꿈으로 결합
+                                if isinstance(result["evidence"], list):
+                                    result["evidence"] = "\n".join(str(item) for item in result["evidence"])
+                                else:
+                                    result["evidence"] = str(result["evidence"])
+
                             print(f"   [SUCCESS] JSON 파싱 성공!")
                             print(f"      - 취약점: {result.get('is_pqc_vulnerable', 'Unknown')}")
                             print(f"      - 알고리즘: {result.get('detected_algorithms', [])}")

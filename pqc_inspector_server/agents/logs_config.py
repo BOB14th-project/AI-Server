@@ -36,8 +36,8 @@ class LogsConfigAgent(BaseAgent):
         try:
             content_text = self._parse_file_content(file_content)
 
-            # RAG 재활성화 (높은 임계값 0.20으로 관련 없는 컨텍스트 차단)
-            print(f"   🧠 RAG 컨텍스트 검색 중 (임계값: 0.20)...")
+            # RAG 컨텍스트 검색 (임계값: 0.10)
+            print(f"   🧠 RAG 컨텍스트 검색 중 (임계값: 0.10)...")
             rag_context = await self._get_rag_context(content_text[:1000], top_k=3)
 
             # RAG 컨텍스트가 있으면 포함, 없으면 순수 LLM 판단
@@ -95,6 +95,15 @@ JSON 형식으로만 응답해주세요."""
                                 result["detected_algorithms"] = [result["detected_algorithms"]]
                             else:
                                 result["detected_algorithms"] = []
+
+                        # evidence가 문자열인지 확인
+                        if "evidence" in result and not isinstance(result["evidence"], str):
+                            print(f"   ⚠️ evidence가 문자열이 아님: {type(result['evidence'])}")
+                            # 리스트면 줄바꿈으로 결합
+                            if isinstance(result["evidence"], list):
+                                result["evidence"] = "\n".join(str(item) for item in result["evidence"])
+                            else:
+                                result["evidence"] = str(result["evidence"])
 
                         # confidence_score 범위 검증
                         if "confidence_score" in result:
