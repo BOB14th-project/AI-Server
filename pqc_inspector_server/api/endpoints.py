@@ -116,6 +116,25 @@ async def analyze_with_logs_config_agent(
         file_content = await file.read()
         agent = LogsConfigAgent()
         result = await agent.analyze(file_content, file.filename)
-        return AgentAnalysisResult(**result)
+
+        # 결과 로깅
+        print(f"   📊 에이전트 분석 결과: {result}")
+
+        # Pydantic 검증 시도
+        try:
+            validated_result = AgentAnalysisResult(**result)
+            print(f"   ✅ Pydantic 검증 성공")
+            return validated_result
+        except Exception as validation_error:
+            print(f"   ❌ Pydantic 검증 실패: {validation_error}")
+            print(f"   📄 문제 필드: {result.keys()}")
+            raise
+
+    except HTTPException:
+        # HTTPException은 그대로 전파
+        raise
     except Exception as e:
+        import traceback
+        print(f"   ❌ 전체 에러 스택:")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"분석 중 오류 발생: {str(e)}")

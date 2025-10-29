@@ -69,25 +69,57 @@ JSON 형식으로만 응답해주세요."""
 JSON 형식으로만 응답해주세요."""
 
             llm_response = await self._call_llm(prompt)
-            
+
             if llm_response.get("success"):
                 try:
                     response_text = llm_response["content"]
+                    print(f"   📄 LLM 원본 응답 (처음 200자): {response_text[:200]}")
+
                     json_start = response_text.find('{')
                     json_end = response_text.rfind('}') + 1
-                    
+
                     if json_start >= 0 and json_end > json_start:
                         json_text = response_text[json_start:json_end]
                         result = json.loads(json_text)
+
+                        # 필수 필드 검증 및 보정
+                        if "is_pqc_vulnerable" not in result:
+                            print(f"   ⚠️ is_pqc_vulnerable 필드 누락, 기본값 False 사용")
+                            result["is_pqc_vulnerable"] = False
+
+                        # detected_algorithms가 리스트인지 확인
+                        if "detected_algorithms" in result and not isinstance(result["detected_algorithms"], list):
+                            print(f"   ⚠️ detected_algorithms가 리스트가 아님: {type(result['detected_algorithms'])}")
+                            # 문자열이면 리스트로 변환
+                            if isinstance(result["detected_algorithms"], str):
+                                result["detected_algorithms"] = [result["detected_algorithms"]]
+                            else:
+                                result["detected_algorithms"] = []
+
+                        # confidence_score 범위 검증
+                        if "confidence_score" in result:
+                            try:
+                                score = float(result["confidence_score"])
+                                if score < 0.0 or score > 1.0:
+                                    print(f"   ⚠️ confidence_score 범위 초과: {score}, 0.5로 보정")
+                                    result["confidence_score"] = 0.5
+                            except (ValueError, TypeError):
+                                print(f"   ⚠️ confidence_score가 숫자가 아님: {result['confidence_score']}")
+                                result["confidence_score"] = 0.0
+
+                        print(f"   ✅ JSON 파싱 성공: is_pqc_vulnerable={result.get('is_pqc_vulnerable')}")
                         return result
                     else:
+                        print(f"   ❌ JSON 형식을 찾을 수 없음")
+                        print(f"   📄 전체 응답: {response_text}")
                         raise ValueError("JSON 형식을 찾을 수 없음")
-                        
+
                 except (json.JSONDecodeError, ValueError) as e:
-                    print(f"LLM 응답 파싱 오류: {e}")
-                    return self._get_default_result(file_name, "LLM 응답 파싱 실패")
+                    print(f"   ❌ LLM 응답 파싱 오류: {e}")
+                    print(f"   📄 파싱 시도한 JSON: {json_text if 'json_text' in locals() else 'N/A'}")
+                    return self._get_default_result(file_name, f"LLM 응답 파싱 실패: {str(e)}")
             else:
-                print(f"LLM 호출 실패: {llm_response.get('error')}")
+                print(f"   ❌ LLM 호출 실패: {llm_response.get('error')}")
                 return self._get_default_result(file_name, "LLM 호출 실패")
                 
         except Exception as e:
