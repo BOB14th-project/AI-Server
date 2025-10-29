@@ -1,0 +1,646 @@
+{
+  "document_type": "RAG Knowledge Base for Source Code Agent",
+  "version": "1.0",
+  "purpose": "Reference document for detecting quantum-vulnerable cryptographic algorithms in source code",
+  "agent_type": "source_code",
+
+  "quantum_vulnerable_algorithms": {
+    "public_key_cryptography": {
+      "vulnerability_type": "Shor's Algorithm",
+      "impact": "Complete break of security",
+      "algorithms": {
+        "RSA": {
+          "description": "Rivest-Shamir-Adleman public-key cryptosystem",
+          "key_sizes": ["1024", "2048", "3072", "4096"],
+          "vulnerability": "Based on integer factorization problem, completely broken by Shor's algorithm",
+          "common_libraries": {
+            "python": ["cryptography", "pycryptodome", "rsa", "Crypto.PublicKey.RSA"],
+            "java": ["java.security.KeyPairGenerator", "javax.crypto.Cipher", "org.bouncycastle.crypto.generators.RSAKeyPairGenerator"],
+            "cpp": ["OpenSSL RSA_*", "Crypto++", "libcrypto", "mbedtls"],
+            "javascript": ["node-rsa", "crypto.generateKeyPairSync", "jsencrypt", "forge"]
+          },
+          "code_patterns": {
+            "key_generation": [
+              "RSA.generate()",
+              "generateKeyPair('rsa'",
+              "KeyPairGenerator.getInstance(\"RSA\")",
+              "RSA_generate_key",
+              "new RSAKeyPairGenerator()"
+            ],
+            "encryption_decryption": [
+              "RSA/ECB/PKCS1Padding",
+              "RSA/ECB/OAEPWithSHA",
+              "publicEncrypt",
+              "privateDecrypt",
+              "RSA_public_encrypt"
+            ],
+            "signature": [
+              "SHA256withRSA",
+              "sign.update",
+              "RSA_sign",
+              "RSASSA-PKCS1-v1_5"
+            ]
+          },
+          "indirect_indicators": [
+            "Large integer arithmetic (1024+ bits)",
+            "Modular exponentiation operations",
+            "Prime number generation",
+            "Public exponent (e = 65537)",
+            "CRT (Chinese Remainder Theorem) optimization"
+          ]
+        },
+        "ECC": {
+          "description": "Elliptic Curve Cryptography",
+          "variants": ["ECDSA", "ECDH", "EC-ElGamal"],
+          "curves": ["P-256", "P-384", "P-521", "secp256k1", "curve25519"],
+          "vulnerability": "Based on discrete logarithm problem on elliptic curves, broken by Shor's algorithm",
+          "common_libraries": {
+            "python": ["cryptography.hazmat.primitives.asymmetric.ec", "ecdsa", "fastecdsa"],
+            "java": ["java.security.spec.ECGenParameterSpec", "org.bouncycastle.jce.ECNamedCurveTable"],
+            "cpp": ["EC_KEY_new_by_curve_name", "ECDSA_sign", "OpenSSL EC_*"],
+            "javascript": ["elliptic", "crypto.createECDH", "secp256k1"]
+          },
+          "code_patterns": {
+            "key_generation": [
+              "ec.generate_private_key",
+              "generateKeyPair('ec'",
+              "ECGenParameterSpec",
+              "EC_KEY_generate_key",
+              "new ECCurve"
+            ],
+            "curve_selection": [
+              "secp256r1",
+              "prime256v1",
+              "secp384r1",
+              "secp521r1",
+              "secp256k1"
+            ],
+            "operations": [
+              "ECDSA_sign",
+              "ECDH.computeSecret",
+              "EC_POINT_mul",
+              "elliptic curve point multiplication"
+            ]
+          },
+          "indirect_indicators": [
+            "Point addition/doubling operations",
+            "Scalar multiplication on curves",
+            "Weierstrass equation operations",
+            "Curve parameter definitions (a, b, p, G, n)"
+          ]
+        },
+        "DH_DSA": {
+          "description": "Diffie-Hellman and Digital Signature Algorithm",
+          "variants": ["DH", "DHE", "DSA", "ElGamal"],
+          "vulnerability": "Based on discrete logarithm problem, broken by Shor's algorithm",
+          "common_libraries": {
+            "python": ["cryptography.hazmat.primitives.asymmetric.dh", "cryptography.hazmat.primitives.asymmetric.dsa"],
+            "java": ["javax.crypto.KeyAgreement", "java.security.KeyPairGenerator DH/DSA"],
+            "cpp": ["DH_generate_key", "DSA_sign", "OpenSSL DH_*", "OpenSSL DSA_*"],
+            "javascript": ["crypto.createDiffieHellman", "crypto.getDiffieHellman"]
+          },
+          "code_patterns": {
+            "diffie_hellman": [
+              "createDiffieHellman",
+              "KeyAgreement.getInstance(\"DH\")",
+              "DH_generate_parameters",
+              "generateParameters()"
+            ],
+            "dsa": [
+              "KeyPairGenerator.getInstance(\"DSA\")",
+              "DSA_generate_key",
+              "DSA.generate",
+              "SHA1withDSA"
+            ]
+          },
+          "indirect_indicators": [
+            "Large prime modulus operations",
+            "Generator (g) and prime (p) parameters",
+            "Modular exponentiation: g^x mod p"
+          ]
+        },
+        "korean_algorithms": {
+          "KCDSA": {
+            "description": "Korean Certificate-based Digital Signature Algorithm",
+            "standard": "TTAS.KO-12.0001/R4",
+            "vulnerability": "Based on discrete logarithm problem, quantum-vulnerable",
+            "code_patterns": [
+              "KCDSA",
+              "Korean DSA",
+              "hash_z calculation",
+              "Korean signature standard"
+            ],
+            "parameters": [
+              "p (prime modulus 1024/2048 bits)",
+              "q (prime divisor 160/224/256 bits)",
+              "g (generator)",
+              "Certificate-based signature"
+            ]
+          },
+          "EC_KCDSA": {
+            "description": "Elliptic Curve Korean Certificate-based DSA",
+            "standard": "TTAS.KO-12.0015/R2",
+            "vulnerability": "Elliptic curve variant, quantum-vulnerable",
+            "code_patterns": [
+              "EC-KCDSA",
+              "EC_KCDSA",
+              "Korean EC signature",
+              "elliptic curve Korean standard"
+            ]
+          }
+        }
+      }
+    },
+
+    "symmetric_key_cryptography": {
+      "vulnerability_type": "Grover's Algorithm",
+      "impact": "Security strength reduced by half (e.g., AES-128 → 64-bit security)",
+      "algorithms": {
+        "AES_128": {
+          "description": "Advanced Encryption Standard with 128-bit key",
+          "vulnerability": "128-bit key reduced to 64-bit effective security by Grover's algorithm",
+          "recommendation": "Upgrade to AES-256 for quantum resistance",
+          "common_libraries": {
+            "python": ["cryptography.fernet", "Crypto.Cipher.AES", "pyaes"],
+            "java": ["javax.crypto.Cipher AES", "org.bouncycastle.crypto.engines.AESEngine"],
+            "cpp": ["AES_*", "EVP_aes_128_*", "mbedtls_aes_*"],
+            "javascript": ["crypto-js", "crypto.createCipheriv('aes-128'"]
+          },
+          "code_patterns": [
+            "AES-128",
+            "aes_128",
+            "aes-128-cbc",
+            "aes-128-gcm",
+            "Cipher.getInstance(\"AES/CBC/PKCS5Padding\") with 128-bit key"
+          ]
+        },
+        "DES_3DES": {
+          "description": "Data Encryption Standard and Triple DES",
+          "vulnerability": "Already weak, further reduced by Grover's algorithm",
+          "recommendation": "Must be replaced, considered broken even classically",
+          "code_patterns": [
+            "DES",
+            "3DES",
+            "TripleDES",
+            "DES/CBC",
+            "DESede"
+          ]
+        },
+        "RC4": {
+          "description": "Rivest Cipher 4 stream cipher",
+          "vulnerability": "Already deprecated due to biases, quantum-vulnerable",
+          "code_patterns": [
+            "RC4",
+            "ARCFOUR",
+            "ARC4"
+          ]
+        },
+        "korean_symmetric_algorithms": {
+          "SEED": {
+            "description": "Korean 128-bit block cipher",
+            "standard": "TTAS.KO-12.0004/R1, RFC 4269",
+            "vulnerability": "128-bit key → 64-bit quantum security (Grover's algorithm)",
+            "recommendation": "Evaluate quantum resistance, consider ARIA-256",
+            "code_patterns": [
+              "SEED",
+              "SEED_*",
+              "KS X 1213",
+              "128-bit block, 128-bit key, 16 rounds"
+            ],
+            "structure_hints": [
+              "16 rounds Feistel network",
+              "F-function with S-boxes",
+              "Key scheduling with endian conversion",
+              "G-function for round key generation"
+            ]
+          },
+          "ARIA": {
+            "description": "Korean block cipher (Korean AES standard)",
+            "standard": "KS X 1213, RFC 5794",
+            "key_sizes": ["128", "192", "256"],
+            "vulnerability": "ARIA-128 → 64-bit quantum security, ARIA-256 better",
+            "code_patterns": [
+              "ARIA",
+              "ARIA-128",
+              "ARIA-256",
+              "Korean AES"
+            ],
+            "structure_hints": [
+              "Substitution-permutation network (SPN)",
+              "Involution property",
+              "12/14/16 rounds for 128/192/256-bit keys"
+            ]
+          },
+          "HIGHT": {
+            "description": "High Security and Light Weight block cipher",
+            "standard": "TTAS.KO-12.0040",
+            "vulnerability": "64-bit block size inadequate, 128-bit key → 64-bit quantum",
+            "code_patterns": [
+              "HIGHT",
+              "64-bit block lightweight cipher",
+              "32 rounds",
+              "IoT cipher"
+            ]
+          },
+          "LEA": {
+            "description": "Lightweight Encryption Algorithm",
+            "standard": "TTAS.KO-12.0223",
+            "key_sizes": ["128", "192", "256"],
+            "vulnerability": "LEA-128 → 64-bit quantum security",
+            "code_patterns": [
+              "LEA",
+              "LEA-128",
+              "LEA-256",
+              "ARX cipher (Add-Rotate-XOR)"
+            ],
+            "structure_hints": [
+              "24/28/32 rounds",
+              "128-bit block size",
+              "ARX operations only",
+              "Very fast in software"
+            ]
+          }
+        }
+      }
+    },
+
+    "hash_functions": {
+      "vulnerability_type": "Grover's Algorithm",
+      "impact": "Collision resistance reduced by cube root, preimage by half",
+      "algorithms": {
+        "MD5": {
+          "description": "Message Digest 5",
+          "vulnerability": "Already broken classically, quantum makes it worse",
+          "code_patterns": [
+            "MD5",
+            "hashlib.md5",
+            "MessageDigest.getInstance(\"MD5\")",
+            "EVP_md5"
+          ]
+        },
+        "SHA1": {
+          "description": "Secure Hash Algorithm 1",
+          "vulnerability": "160-bit → 80-bit quantum collision resistance",
+          "code_patterns": [
+            "SHA1",
+            "SHA-1",
+            "hashlib.sha1",
+            "MessageDigest.getInstance(\"SHA-1\")"
+          ]
+        },
+        "SHA256": {
+          "description": "SHA-2 256-bit",
+          "vulnerability": "256-bit → 128-bit quantum collision resistance (still acceptable)",
+          "recommendation": "Consider SHA-512 for long-term security",
+          "code_patterns": [
+            "SHA256",
+            "SHA-256",
+            "hashlib.sha256"
+          ]
+        },
+        "korean_hash_functions": {
+          "HAS_160": {
+            "description": "Korean Hash Algorithm Standard 160-bit",
+            "standard": "TTAS.KO-12.0011/R2",
+            "vulnerability": "160-bit → 80-bit quantum collision resistance",
+            "code_patterns": [
+              "HAS-160",
+              "HAS160",
+              "Korean hash standard"
+            ]
+          },
+          "LSH": {
+            "description": "Lightweight Secure Hash",
+            "standard": "TTAS.KO-12.0276",
+            "variants": ["LSH-256", "LSH-512"],
+            "vulnerability": "LSH-256 → 128-bit quantum collision resistance",
+            "code_patterns": [
+              "LSH",
+              "LSH-256",
+              "LSH-512"
+            ]
+          }
+        }
+      }
+    }
+  },
+
+  "detection_strategies": {
+    "library_import_analysis": {
+      "description": "Analyze import statements and library usage",
+      "python_imports": [
+        "from cryptography.hazmat.primitives.asymmetric import rsa, dsa, dh, ec",
+        "from Crypto.PublicKey import RSA, DSA, ECC",
+        "import rsa",
+        "import ecdsa",
+        "from Crypto.Cipher import DES, DES3, ARC4"
+      ],
+      "java_imports": [
+        "import java.security.KeyPairGenerator",
+        "import javax.crypto.KeyAgreement",
+        "import org.bouncycastle.crypto"
+      ],
+      "cpp_includes": [
+        "#include <openssl/rsa.h>",
+        "#include <openssl/dsa.h>",
+        "#include <openssl/dh.h>",
+        "#include <openssl/ec.h>"
+      ]
+    },
+
+    "function_call_patterns": {
+      "description": "Identify cryptographic function calls",
+      "key_generation_functions": [
+        "generate_private_key",
+        "generateKeyPair",
+        "KeyPairGenerator.getInstance",
+        "RSA_generate_key",
+        "EC_KEY_generate_key"
+      ],
+      "cipher_instantiation": [
+        "Cipher.getInstance",
+        "crypto.createCipher",
+        "EVP_EncryptInit",
+        "new AESEngine"
+      ]
+    },
+
+    "constant_and_parameter_analysis": {
+      "description": "Detect cryptographic constants and parameters",
+      "rsa_indicators": [
+        "Key size constants: 1024, 2048, 4096",
+        "Public exponent: 65537 (0x10001)",
+        "Modulus length checks"
+      ],
+      "ecc_indicators": [
+        "Curve names: P-256, secp256k1, prime256v1",
+        "Curve parameters: p, a, b, G, n, h",
+        "Point coordinate operations"
+      ],
+      "symmetric_indicators": [
+        "Block size: 64, 128 bits",
+        "Round counts: 16 (SEED), 32 (HIGHT), 24-32 (LEA)",
+        "Key schedule constants"
+      ]
+    },
+
+    "algorithm_structure_recognition": {
+      "description": "Recognize implementation structures without explicit names",
+      "feistel_network": {
+        "indicators": [
+          "Round function F applied to half block",
+          "XOR with other half",
+          "Swap operation between rounds",
+          "Multiple rounds (typically 16-32)"
+        ],
+        "vulnerable_algorithms": ["DES", "3DES", "SEED"]
+      },
+      "spn_network": {
+        "indicators": [
+          "Substitution layer (S-boxes)",
+          "Permutation layer (P-boxes)",
+          "Key mixing (XOR with round keys)",
+          "Multiple rounds"
+        ],
+        "vulnerable_algorithms": ["AES", "ARIA"]
+      },
+      "arx_structure": {
+        "indicators": [
+          "Addition operations (modular)",
+          "Rotation operations (bit rotate)",
+          "XOR operations",
+          "No S-boxes or lookup tables"
+        ],
+        "vulnerable_algorithms": ["LEA", "ChaCha20"]
+      },
+      "modular_exponentiation": {
+        "indicators": [
+          "pow(base, exponent, modulus)",
+          "Repeated squaring loops",
+          "Montgomery multiplication",
+          "Large integer operations (1024+ bits)"
+        ],
+        "vulnerable_algorithms": ["RSA", "DH", "DSA", "ElGamal"]
+      },
+      "elliptic_curve_operations": {
+        "indicators": [
+          "Point addition: (x1,y1) + (x2,y2)",
+          "Point doubling: 2P",
+          "Scalar multiplication: k*P",
+          "Modular arithmetic on curve"
+        ],
+        "vulnerable_algorithms": ["ECDSA", "ECDH", "EC-KCDSA"]
+      }
+    },
+
+    "indirect_detection_methods": {
+      "description": "Detect algorithms through indirect evidence",
+      "mathematical_operations": {
+        "large_prime_generation": {
+          "indicators": ["Prime testing (Miller-Rabin)", "Prime generation loops", "Primality checks"],
+          "suggests": ["RSA", "DH", "DSA"]
+        },
+        "gcd_extended_euclidean": {
+          "indicators": ["Greatest common divisor", "Modular inverse calculation"],
+          "suggests": ["RSA key generation"]
+        },
+        "chinese_remainder_theorem": {
+          "indicators": ["CRT optimization", "p and q prime factors", "dP, dQ, qInv parameters"],
+          "suggests": ["RSA private key operations"]
+        }
+      },
+      "data_structure_patterns": {
+        "key_components": {
+          "rsa_key": ["n (modulus)", "e (public exponent)", "d (private exponent)", "p, q (primes)"],
+          "ecc_key": ["private scalar", "public point (x, y)", "curve parameters"],
+          "dh_parameters": ["p (prime)", "g (generator)", "public value"]
+        }
+      },
+      "variable_naming_hints": {
+        "common_names": [
+          "modulus, exponent",
+          "prime, generator",
+          "curve, point, scalar",
+          "round_key, subkey",
+          "s_box, p_box"
+        ]
+      }
+    }
+  },
+
+  "language_specific_patterns": {
+    "python": {
+      "cryptography_library": {
+        "rsa": "from cryptography.hazmat.primitives.asymmetric import rsa; private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+        "ecc": "from cryptography.hazmat.primitives.asymmetric import ec; private_key = ec.generate_private_key(ec.SECP256R1())",
+        "dh": "from cryptography.hazmat.primitives.asymmetric import dh; parameters = dh.generate_parameters(generator=2, key_size=2048)"
+      },
+      "pycryptodome": {
+        "rsa": "from Crypto.PublicKey import RSA; key = RSA.generate(2048)",
+        "aes": "from Crypto.Cipher import AES; cipher = AES.new(key, AES.MODE_CBC)"
+      }
+    },
+
+    "java": {
+      "jca_jce": {
+        "rsa": "KeyPairGenerator keyGen = KeyPairGenerator.getInstance(\"RSA\"); keyGen.initialize(2048)",
+        "ecc": "KeyPairGenerator keyGen = KeyPairGenerator.getInstance(\"EC\"); ECGenParameterSpec ecSpec = new ECGenParameterSpec(\"secp256r1\")",
+        "aes": "Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\")"
+      },
+      "bouncycastle": {
+        "indicators": ["org.bouncycastle.crypto", "BCProvider", "new RSAEngine()"]
+      }
+    },
+
+    "cpp": {
+      "openssl": {
+        "rsa": "RSA_generate_key_ex(rsa, 2048, bn, NULL)",
+        "ecc": "EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); EC_KEY_generate_key(eckey)",
+        "aes": "EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)"
+      },
+      "cryptopp": {
+        "indicators": ["CryptoPP::", "RSA::PrivateKey", "ECDSA<ECP>"]
+      }
+    },
+
+    "javascript": {
+      "node_crypto": {
+        "rsa": "crypto.generateKeyPairSync('rsa', { modulusLength: 2048 })",
+        "ecc": "crypto.generateKeyPairSync('ec', { namedCurve: 'secp256k1' })",
+        "dh": "crypto.createDiffieHellman(2048)"
+      },
+      "web_crypto_api": {
+        "indicators": ["window.crypto.subtle", "generateKey", "RSA-OAEP", "ECDSA"]
+      }
+    }
+  },
+
+  "obfuscation_techniques_to_detect": {
+    "description": "Common ways developers might obscure algorithm usage",
+    "techniques": {
+      "generic_naming": {
+        "examples": [
+          "processData() instead of encryptRSA()",
+          "transform() instead of hash()",
+          "secureChannel() instead of ecdhKeyExchange()"
+        ],
+        "detection": "Look for mathematical operations, not just names"
+      },
+      "computed_constants": {
+        "examples": [
+          "rounds = 1 << 4  # 16 rounds for SEED",
+          "key_bits = 64 * 2  # 128-bit key",
+          "modulus_size = 1024 + 1024  # 2048-bit RSA"
+        ],
+        "detection": "Evaluate constant expressions to actual values"
+      },
+      "split_implementation": {
+        "examples": [
+          "Key generation in one function",
+          "Encryption in another",
+          "Both using shared constants"
+        ],
+        "detection": "Track data flow between functions"
+      },
+      "custom_implementations": {
+        "examples": [
+          "Manual modular exponentiation",
+          "Custom prime generation",
+          "Hand-coded S-boxes"
+        ],
+        "detection": "Recognize mathematical patterns"
+      }
+    }
+  },
+
+  "decision_tree": {
+    "description": "Step-by-step decision process for detection",
+    "steps": [
+      {
+        "step": 1,
+        "question": "Does the code import cryptographic libraries?",
+        "yes": "Analyze imported modules and functions",
+        "no": "Proceed to step 2"
+      },
+      {
+        "step": 2,
+        "question": "Are there explicit algorithm names in code?",
+        "yes": "Check if algorithm is quantum-vulnerable",
+        "no": "Proceed to step 3"
+      },
+      {
+        "step": 3,
+        "question": "Are there large integer operations (1024+ bits)?",
+        "yes": "Likely RSA, DH, or DSA → quantum-vulnerable",
+        "no": "Proceed to step 4"
+      },
+      {
+        "step": 4,
+        "question": "Are there elliptic curve operations?",
+        "yes": "Likely ECDSA, ECDH → quantum-vulnerable",
+        "no": "Proceed to step 5"
+      },
+      {
+        "step": 5,
+        "question": "Are there Feistel/SPN structures with specific round counts?",
+        "yes": "Check round count: 16→SEED/DES, 10/12/14→AES, 24-32→LEA",
+        "no": "Proceed to step 6"
+      },
+      {
+        "step": 6,
+        "question": "Are there block cipher operations with 128-bit keys?",
+        "yes": "Likely AES-128, SEED, ARIA-128 → quantum-vulnerable (reduced security)",
+        "no": "May not be quantum-vulnerable or not detectable"
+      }
+    ]
+  },
+
+  "confidence_scoring": {
+    "description": "How to assess confidence in detection",
+    "high_confidence": [
+      "Explicit library import with algorithm name",
+      "Function calls with algorithm in name",
+      "Standard API usage (e.g., Java Cipher.getInstance(\"RSA\"))"
+    ],
+    "medium_confidence": [
+      "Characteristic mathematical operations",
+      "Typical key sizes and parameters",
+      "Structure matches known algorithm"
+    ],
+    "low_confidence": [
+      "Generic variable names only",
+      "Partial implementation",
+      "Ambiguous operations"
+    ]
+  },
+
+  "common_pitfalls": {
+    "false_positives": [
+      "Non-cryptographic use of prime numbers",
+      "Hash functions for data structures (not security)",
+      "Random number generation (not necessarily RSA)"
+    ],
+    "false_negatives": [
+      "Heavily obfuscated code",
+      "Custom crypto implementations without standard patterns",
+      "Encrypted or compiled code included as binary data"
+    ]
+  },
+
+  "context_awareness": {
+    "description": "Consider the broader context",
+    "file_context": {
+      "security_modules": "Higher likelihood of crypto usage",
+      "authentication_code": "Often uses RSA, ECDSA",
+      "key_exchange": "Often uses DH, ECDH",
+      "data_protection": "Often uses AES, symmetric ciphers"
+    },
+    "comment_analysis": {
+      "look_for": [
+        "References to security standards (FIPS, NIST, Korean standards)",
+        "Mentions of encryption, signing, key exchange",
+        "Algorithm names in comments even if not in code"
+      ]
+    }
+  }
+}

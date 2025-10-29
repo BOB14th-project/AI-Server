@@ -1,0 +1,796 @@
+{
+  "document_type": "RAG Knowledge Base for Logs and Configuration Agent",
+  "version": "1.0",
+  "purpose": "Reference document for detecting quantum-vulnerable cryptographic algorithms in configuration files, system logs, and application logs",
+  "agent_type": "logs_config",
+
+  "detection_approach": {
+    "description": "Identify crypto algorithms through configuration settings and runtime logs",
+    "data_sources": [
+      "Configuration files (YAML, JSON, XML, INI, TOML)",
+      "SSL/TLS configuration",
+      "Web server configurations (Apache, Nginx, IIS)",
+      "Application logs",
+      "System logs (syslog, Windows Event Log)",
+      "Certificate files and metadata",
+      "Security audit logs",
+      "Database configuration",
+      "API gateway settings"
+    ],
+    "detection_methods": [
+      "Parse configuration key-value pairs",
+      "Extract cipher suite specifications",
+      "Analyze certificate information",
+      "Track algorithm mentions in logs",
+      "Identify library initialization messages",
+      "Monitor key generation events",
+      "Scan error messages for algorithm names"
+    ]
+  },
+
+  "configuration_file_patterns": {
+    "ssl_tls_configuration": {
+      "description": "SSL/TLS settings in various servers and applications",
+      "apache_httpd": {
+        "file_locations": [
+          "/etc/httpd/conf.d/ssl.conf",
+          "/etc/apache2/sites-available/default-ssl.conf",
+          "httpd-ssl.conf"
+        ],
+        "quantum_vulnerable_directives": {
+          "SSLProtocol": {
+            "vulnerable_values": [
+              "SSLv2", "SSLv3", "TLSv1.0", "TLSv1.1"
+            ],
+            "note": "Older TLS versions use weak or quantum-vulnerable crypto"
+          },
+          "SSLCipherSuite": {
+            "rsa_ciphers": [
+              "TLS_RSA_WITH_*",
+              "ECDHE-RSA-*",
+              "DHE-RSA-*",
+              "RSA-*"
+            ],
+            "ecdsa_ciphers": [
+              "ECDHE-ECDSA-*",
+              "ECDH-ECDSA-*"
+            ],
+            "dh_ciphers": [
+              "DHE-*",
+              "EDH-*",
+              "DH-*"
+            ],
+            "weak_symmetric": [
+              "DES-*",
+              "3DES-*",
+              "RC4-*",
+              "AES128-*"
+            ],
+            "example_vulnerable": "ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-SHA256"
+          },
+          "SSLCertificateFile": {
+            "description": "Certificate file path",
+            "analysis": "Check certificate's public key algorithm (RSA, ECDSA)"
+          },
+          "SSLCertificateKeyFile": {
+            "description": "Private key file path",
+            "analysis": "Determine key type and size"
+          }
+        },
+        "example_config": [
+          "SSLProtocol all -SSLv2 -SSLv3",
+          "SSLCipherSuite ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384",
+          "SSLCertificateFile /etc/pki/tls/certs/server.crt",
+          "SSLCertificateKeyFile /etc/pki/tls/private/server.key"
+        ]
+      },
+      "nginx": {
+        "file_locations": [
+          "/etc/nginx/nginx.conf",
+          "/etc/nginx/sites-available/default",
+          "/etc/nginx/conf.d/ssl.conf"
+        ],
+        "quantum_vulnerable_directives": {
+          "ssl_protocols": {
+            "vulnerable": ["SSLv2", "SSLv3", "TLSv1", "TLSv1.1"]
+          },
+          "ssl_ciphers": {
+            "format": "OpenSSL cipher string",
+            "vulnerable_patterns": "Same as Apache (RSA, ECDSA, DH, weak symmetric)"
+          },
+          "ssl_certificate": "Certificate file path",
+          "ssl_certificate_key": "Private key file path",
+          "ssl_dhparam": {
+            "description": "DH parameters file",
+            "indicates": "Diffie-Hellman key exchange (quantum-vulnerable)"
+          },
+          "ssl_ecdh_curve": {
+            "description": "ECDH curve selection",
+            "vulnerable_values": ["secp256r1", "secp384r1", "secp521r1", "prime256v1"],
+            "indicates": "ECDH usage (quantum-vulnerable)"
+          }
+        },
+        "example_config": [
+          "ssl_protocols TLSv1.2 TLSv1.3;",
+          "ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256';",
+          "ssl_dhparam /etc/nginx/dhparam.pem;",
+          "ssl_ecdh_curve secp384r1;"
+        ]
+      },
+      "haproxy": {
+        "file_location": "/etc/haproxy/haproxy.cfg",
+        "directives": {
+          "bind_options": {
+            "ssl": "Enables SSL/TLS",
+            "ciphers": "Cipher suite specification",
+            "crt": "Certificate and key file"
+          },
+          "ssl-default-bind-ciphers": "Default cipher suite",
+          "tune.ssl.default-dh-param": "DH parameter size (e.g., 2048)"
+        },
+        "example": "bind :443 ssl crt /etc/ssl/certs/example.pem ciphers ECDHE-RSA-AES256-GCM-SHA384"
+      },
+      "microsoft_iis": {
+        "configuration": "Registry or applicationHost.config",
+        "registry_locations": [
+          "HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Protocols",
+          "HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Ciphers"
+        ],
+        "cipher_suites": {
+          "location": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Cryptography\\Configuration\\SSL\\00010002",
+          "vulnerable_patterns": "TLS_RSA_*, TLS_ECDHE_RSA_*, TLS_DHE_*"
+        }
+      }
+    },
+
+    "application_crypto_config": {
+      "description": "Application-level cryptographic configuration",
+      "openssl_config": {
+        "file": "openssl.cnf",
+        "sections": {
+          "req_distinguished_name": "Certificate subject information",
+          "req": {
+            "default_bits": {
+              "values": ["1024", "2048", "4096"],
+              "indicates": "RSA key size (all quantum-vulnerable)"
+            },
+            "default_md": {
+              "vulnerable": ["md5", "sha1", "sha256"],
+              "note": "Hash algorithm used in signatures"
+            }
+          },
+          "ca": {
+            "default_ca": "CA section name",
+            "certificate": "CA certificate path"
+          }
+        },
+        "example": [
+          "default_bits = 2048",
+          "default_md = sha256",
+          "distinguished_name = req_distinguished_name"
+        ]
+      },
+      "java_security_properties": {
+        "file": "$JAVA_HOME/lib/security/java.security",
+        "properties": {
+          "jdk.tls.disabledAlgorithms": {
+            "description": "Algorithms disabled for TLS",
+            "example": "SSLv3, RC4, DES, MD5withRSA"
+          },
+          "jdk.certpath.disabledAlgorithms": {
+            "description": "Disabled certificate signature algorithms",
+            "example": "MD2, MD5, RSA keySize < 1024"
+          },
+          "security.provider.N": {
+            "description": "Cryptographic service providers",
+            "example": "security.provider.1=SUN"
+          }
+        }
+      },
+      "python_cryptography_config": {
+        "formats": ["YAML", "JSON", "Python config files"],
+        "common_keys": {
+          "algorithm": ["RSA", "ECDSA", "AES", "DES"],
+          "key_size": ["1024", "2048", "128", "256"],
+          "hash_algorithm": ["MD5", "SHA1", "SHA256"],
+          "cipher_mode": ["CBC", "GCM", "ECB"]
+        },
+        "example_yaml": [
+          "crypto:",
+          "  algorithm: RSA",
+          "  key_size: 2048",
+          "  padding: OAEP",
+          "  hash: SHA256"
+        ]
+      },
+      "korean_crypto_standards_config": {
+        "seed_config": {
+          "algorithm_names": ["SEED", "SEED-128", "KISA-SEED"],
+          "modes": ["CBC", "ECB", "CTR", "GCM"],
+          "key_size": "128",
+          "block_size": "128",
+          "example": [
+            "cipher_algorithm: SEED",
+            "cipher_mode: CBC",
+            "key_length: 128"
+          ]
+        },
+        "aria_config": {
+          "algorithm_names": ["ARIA", "ARIA-128", "ARIA-256"],
+          "key_sizes": ["128", "192", "256"],
+          "example": "encryption_algorithm: ARIA-256-GCM"
+        },
+        "lea_config": {
+          "algorithm_names": ["LEA", "LEA-128", "LEA-256"],
+          "key_sizes": ["128", "192", "256"],
+          "example": "block_cipher: LEA-128-CBC"
+        },
+        "kcdsa_config": {
+          "algorithm_names": ["KCDSA", "EC-KCDSA"],
+          "key_sizes": ["1024", "2048"],
+          "example": "signature_algorithm: KCDSA-SHA256"
+        }
+      }
+    },
+
+    "database_crypto_config": {
+      "description": "Database encryption configuration",
+      "postgresql": {
+        "file": "postgresql.conf",
+        "ssl_settings": {
+          "ssl": "on/off",
+          "ssl_ciphers": "Cipher suite specification",
+          "ssl_cert_file": "Server certificate",
+          "ssl_key_file": "Server private key",
+          "ssl_ca_file": "CA certificate"
+        },
+        "example": [
+          "ssl = on",
+          "ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'",
+          "ssl_cert_file = 'server.crt'",
+          "ssl_key_file = 'server.key'"
+        ]
+      },
+      "mysql_mariadb": {
+        "file": "my.cnf or my.ini",
+        "ssl_settings": {
+          "ssl-ca": "CA certificate",
+          "ssl-cert": "Server certificate",
+          "ssl-key": "Server key",
+          "ssl-cipher": "Allowed cipher suites"
+        },
+        "encryption": {
+          "innodb_encrypt_tables": "Table encryption",
+          "innodb_encrypt_log": "Log encryption",
+          "encryption_algorithm": ["AES", "ARIA"]
+        }
+      },
+      "mongodb": {
+        "file": "mongod.conf (YAML)",
+        "tls_settings": {
+          "net.tls.mode": "requireTLS",
+          "net.tls.certificateKeyFile": "Certificate and key",
+          "net.tls.allowConnectionsWithoutCertificates": "true/false"
+        },
+        "encryption_at_rest": {
+          "security.enableEncryption": "true",
+          "security.encryptionCipherMode": ["AES256-CBC", "AES256-GCM"]
+        }
+      }
+    },
+
+    "vpn_crypto_config": {
+      "description": "VPN cryptographic configuration",
+      "openvpn": {
+        "file": "server.conf / client.conf",
+        "crypto_directives": {
+          "cipher": {
+            "description": "Data channel cipher",
+            "vulnerable": ["DES-CBC", "DES-EDE3-CBC", "BF-CBC", "AES-128-CBC"],
+            "example": "cipher AES-256-CBC"
+          },
+          "auth": {
+            "description": "HMAC authentication algorithm",
+            "vulnerable": ["MD5", "SHA1"],
+            "example": "auth SHA256"
+          },
+          "dh": {
+            "description": "Diffie-Hellman parameters file",
+            "indicates": "DH key exchange (quantum-vulnerable)",
+            "example": "dh dh2048.pem"
+          },
+          "tls-cipher": {
+            "description": "TLS control channel ciphers",
+            "vulnerable": "Any with RSA, ECDSA, DH",
+            "example": "tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384"
+          }
+        }
+      },
+      "ipsec_strongswan": {
+        "file": "ipsec.conf",
+        "crypto_parameters": {
+          "ike": {
+            "description": "IKE (phase 1) algorithms",
+            "format": "encryption-integrity-dhgroup",
+            "vulnerable_example": "aes128-sha256-modp2048",
+            "dh_groups": {
+              "modp2048": "DH group 14 (2048-bit, quantum-vulnerable)",
+              "modp3072": "DH group 15 (3072-bit, quantum-vulnerable)",
+              "ecp256": "ECDH P-256 (quantum-vulnerable)"
+            }
+          },
+          "esp": {
+            "description": "ESP (phase 2) algorithms",
+            "format": "encryption-integrity",
+            "vulnerable_example": "aes128-sha256"
+          }
+        },
+        "example": [
+          "ike=aes256-sha384-modp2048!",
+          "esp=aes256-sha256!"
+        ]
+      },
+      "wireguard": {
+        "description": "Modern VPN using fixed crypto",
+        "algorithms": {
+          "key_exchange": "Curve25519 (ECDH, quantum-vulnerable)",
+          "symmetric": "ChaCha20-Poly1305",
+          "hash": "BLAKE2s"
+        },
+        "note": "WireGuard has no configurable crypto; uses fixed algorithms including quantum-vulnerable Curve25519"
+      }
+    },
+
+    "certificate_files": {
+      "description": "X.509 certificates contain public key information",
+      "pem_format": {
+        "extensions": [".pem", ".crt", ".cer", ".key"],
+        "structure": "Base64-encoded DER with BEGIN/END markers",
+        "parsing": "Extract Subject Public Key Info"
+      },
+      "public_key_algorithms": {
+        "RSA": {
+          "oid": "1.2.840.113549.1.1.1",
+          "key_sizes": ["1024", "2048", "3072", "4096"],
+          "detection_in_text": [
+            "Public Key Algorithm: rsaEncryption",
+            "RSA Public-Key: (2048 bit)",
+            "Modulus:",
+            "Exponent: 65537 (0x10001)"
+          ],
+          "vulnerability": "All RSA key sizes are quantum-vulnerable"
+        },
+        "ECDSA": {
+          "oid_secp256r1": "1.2.840.10045.3.1.7",
+          "oid_secp384r1": "1.3.132.0.34",
+          "detection_in_text": [
+            "Public Key Algorithm: id-ecPublicKey",
+            "ASN1 OID: prime256v1",
+            "NIST CURVE: P-256",
+            "NIST CURVE: P-384"
+          ],
+          "vulnerability": "All ECDSA curves are quantum-vulnerable"
+        },
+        "DSA": {
+          "oid": "1.2.840.10040.4.1",
+          "detection_in_text": "Public Key Algorithm: dsaEncryption",
+          "vulnerability": "DSA is quantum-vulnerable"
+        }
+      },
+      "signature_algorithms": {
+        "rsa_signatures": [
+          "sha256WithRSAEncryption",
+          "sha384WithRSAEncryption",
+          "sha512WithRSAEncryption",
+          "sha1WithRSAEncryption (weak)"
+        ],
+        "ecdsa_signatures": [
+          "ecdsa-with-SHA256",
+          "ecdsa-with-SHA384",
+          "ecdsa-with-SHA512"
+        ],
+        "detection": "Signature Algorithm: <algorithm_name>"
+      },
+      "example_cert_text_output": [
+        "Certificate:",
+        "    Data:",
+        "        Version: 3 (0x2)",
+        "        Serial Number: 123456789",
+        "        Signature Algorithm: sha256WithRSAEncryption",
+        "        Issuer: CN=Example CA",
+        "        Validity:",
+        "            Not Before: Jan  1 00:00:00 2024 GMT",
+        "            Not After : Dec 31 23:59:59 2025 GMT",
+        "        Subject: CN=example.com",
+        "        Subject Public Key Info:",
+        "            Public Key Algorithm: rsaEncryption",
+        "                RSA Public-Key: (2048 bit)",
+        "                Modulus:",
+        "                    00:c2:4e:...",
+        "                Exponent: 65537 (0x10001)"
+      ]
+    },
+
+    "cloud_service_config": {
+      "aws": {
+        "kms_config": {
+          "key_spec": {
+            "rsa_2048": "RSA_2048",
+            "rsa_3072": "RSA_3072",
+            "rsa_4096": "RSA_4096",
+            "ecc_nist_p256": "ECC_NIST_P256",
+            "ecc_nist_p384": "ECC_NIST_P384",
+            "ecc_nist_p521": "ECC_NIST_P521",
+            "symmetric": ["SYMMETRIC_DEFAULT (AES-256)", "AES_256", "AES_128"]
+          },
+          "detection": "KeyMetadata.KeySpec or CustomerMasterKeySpec"
+        },
+        "cloudfront_ssl": {
+          "ssl_protocols": ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"],
+          "security_policy": "Defines allowed TLS versions and cipher suites"
+        }
+      },
+      "azure": {
+        "key_vault": {
+          "key_types": ["RSA", "RSA-HSM", "EC", "EC-HSM"],
+          "key_sizes": {
+            "RSA": ["2048", "3072", "4096"],
+            "EC": ["P-256", "P-384", "P-521", "P-256K"]
+          }
+        }
+      },
+      "gcp": {
+        "cloud_kms": {
+          "crypto_key_version_algorithm": [
+            "GOOGLE_SYMMETRIC_ENCRYPTION (AES-256)",
+            "RSA_SIGN_PKCS1_2048_SHA256",
+            "RSA_SIGN_PKCS1_4096_SHA256",
+            "EC_SIGN_P256_SHA256",
+            "EC_SIGN_P384_SHA384"
+          ]
+        }
+      }
+    }
+  },
+
+  "log_file_patterns": {
+    "description": "Detect crypto algorithm usage from runtime logs",
+    "ssl_tls_handshake_logs": {
+      "apache_ssl_log": {
+        "format": "CustomLog with %{SSL_PROTOCOL}x %{SSL_CIPHER}x",
+        "example_entries": [
+          "TLSv1.2 ECDHE-RSA-AES128-GCM-SHA256",
+          "TLSv1.2 DHE-RSA-AES256-SHA256"
+        ],
+        "detection": "Extract cipher suite names from log entries"
+      },
+      "nginx_ssl_log": {
+        "variables": "$ssl_protocol $ssl_cipher",
+        "example": "2024/01/15 10:23:45 [info] TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384"
+      },
+      "java_ssl_debug": {
+        "enable": "java -Djavax.net.debug=ssl,handshake",
+        "log_patterns": [
+          "*** CertificateVerify",
+          "Signature Algorithm: SHA256withRSA",
+          "Cipher Suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "Server key: RSA, 2048 bits"
+        ]
+      },
+      "openssl_s_client_output": {
+        "description": "OpenSSL client connection debug output",
+        "patterns": [
+          "Cipher    : ECDHE-RSA-AES256-GCM-SHA384",
+          "Protocol  : TLSv1.2",
+          "Server public key is 2048 bit",
+          "Peer signature type: RSA"
+        ]
+      }
+    },
+
+    "application_crypto_logs": {
+      "key_generation_logs": {
+        "patterns": [
+          "Generating RSA private key, 2048 bit",
+          "Generating EC private key, P-256 curve",
+          "Generated 2048-bit RSA key pair",
+          "ECDSA key generation using secp256r1",
+          "DH parameters generated: 2048 bits"
+        ],
+        "example": "2024-01-15 10:30:00 INFO: Generated RSA-2048 key pair for user authentication"
+      },
+      "encryption_operation_logs": {
+        "patterns": [
+          "Encrypting data with AES-128-CBC",
+          "Using SEED cipher for file encryption",
+          "RSA/ECB/PKCS1Padding encryption",
+          "ECDH key agreement using P-256",
+          "Signing with SHA256withRSA"
+        ],
+        "example": "2024-01-15 10:35:00 DEBUG: AES-128-GCM encryption initialized"
+      },
+      "library_initialization_logs": {
+        "openssl": [
+          "OpenSSL 1.1.1k initialized",
+          "Loaded RSA engine",
+          "FIPS mode enabled"
+        ],
+        "bouncycastle": [
+          "BouncyCastle provider registered",
+          "BC version 1.70"
+        ],
+        "korean_crypto_libs": [
+          "KISA cryptographic library initialized",
+          "SEED algorithm module loaded",
+          "ARIA cipher provider registered"
+        ]
+      },
+      "certificate_validation_logs": {
+        "patterns": [
+          "Certificate validation: RSA 2048-bit key",
+          "Verifying ECDSA signature",
+          "Certificate signature algorithm: sha256WithRSAEncryption",
+          "Certificate chain validation using RSA"
+        ]
+      }
+    },
+
+    "system_security_logs": {
+      "linux_auth_log": {
+        "file": "/var/log/auth.log or /var/log/secure",
+        "patterns": [
+          "sshd.*RSA",
+          "Accepted publickey.*RSA",
+          "Accepted publickey.*ECDSA",
+          "Server host key.*ssh-rsa"
+        ],
+        "example": "Jan 15 10:40:00 server sshd[1234]: Accepted publickey for user from 192.168.1.100 port 50000 ssh2: RSA SHA256:abc123..."
+      },
+      "windows_event_log": {
+        "event_ids": {
+          "4776": "Credential validation (NTLM - uses MD4/MD5)",
+          "4768": "Kerberos TGT request (uses RC4 or AES)",
+          "4769": "Kerberos service ticket (encryption type field)"
+        },
+        "crypto_indicators": [
+          "Encryption Type: 0x17 (RC4-HMAC)",
+          "Encryption Type: 0x12 (AES256-SHA1)",
+          "Certificate Thumbprint Algorithm: sha256RSA"
+        ]
+      },
+      "audit_logs": {
+        "patterns": [
+          "Cryptographic operation: RSA key generation",
+          "Algorithm used: ECDSA-P256",
+          "Key exchange: DHE-2048",
+          "Cipher negotiated: AES-128-GCM"
+        ]
+      }
+    },
+
+    "error_and_warning_logs": {
+      "description": "Errors often reveal algorithm details",
+      "patterns": [
+        "RSA key too small: 1024 bits",
+        "Unsupported cipher: DES-CBC",
+        "ECDSA signature verification failed",
+        "MD5 hash algorithm deprecated",
+        "Certificate uses weak signature: SHA1withRSA",
+        "DH parameter size insufficient: 1024 bits"
+      ],
+      "example": "ERROR: Certificate validation failed - RSA-1024 key size below minimum required 2048 bits"
+    },
+
+    "performance_and_debug_logs": {
+      "timing_information": [
+        "RSA decryption took 15ms",
+        "ECDSA signature generation: 5ms",
+        "AES-256 encryption throughput: 500 MB/s"
+      ],
+      "operation_counts": [
+        "Processed 1000 RSA signatures",
+        "ECDH key exchanges: 250",
+        "AES-128 encryptions: 5000"
+      ]
+    }
+  },
+
+  "detection_strategies": {
+    "configuration_file_analysis": {
+      "step_1": "Identify file format (YAML, JSON, XML, INI, plain text)",
+      "step_2": "Parse key-value pairs or structured data",
+      "step_3": "Search for crypto-related keys (cipher, algorithm, ssl, tls, encryption, signature)",
+      "step_4": "Extract algorithm names and parameters",
+      "step_5": "Map to quantum vulnerability categories",
+      "step_6": "Assess confidence based on explicitness"
+    },
+    "log_file_analysis": {
+      "step_1": "Identify log format and structure",
+      "step_2": "Extract timestamps and log levels",
+      "step_3": "Search for crypto-related keywords",
+      "step_4": "Identify algorithm mentions in context",
+      "step_5": "Track frequency of algorithm usage",
+      "step_6": "Correlate with error/warning messages"
+    },
+    "certificate_analysis": {
+      "step_1": "Detect certificate format (PEM, DER)",
+      "step_2": "Parse certificate structure (if possible)",
+      "step_3": "Extract Public Key Algorithm field",
+      "step_4": "Extract Signature Algorithm field",
+      "step_5": "Identify key size and curve parameters",
+      "step_6": "Determine quantum vulnerability"
+    }
+  },
+
+  "keyword_patterns": {
+    "algorithm_names": {
+      "public_key": [
+        "RSA", "rsa", "rsaEncryption",
+        "ECDSA", "ecdsa", "EC", "ec", "ECC",
+        "DH", "DHE", "ECDH", "ECDHE",
+        "DSA", "dsa",
+        "ElGamal",
+        "KCDSA", "EC-KCDSA"
+      ],
+      "symmetric": [
+        "AES-128", "AES128",
+        "DES", "3DES", "TripleDES", "DES-EDE3",
+        "RC4", "ARCFOUR", "ARC4",
+        "SEED", "ARIA", "LEA", "HIGHT"
+      ],
+      "hash": [
+        "MD5", "md5",
+        "SHA-1", "SHA1", "sha1",
+        "SHA-256", "SHA256", "sha256",
+        "HAS-160", "LSH"
+      ]
+    },
+    "parameter_names": {
+      "key_size_indicators": [
+        "key_size", "keysize", "key-size",
+        "key_length", "keylength", "key-length",
+        "modulus_length", "bits",
+        "default_bits"
+      ],
+      "algorithm_indicators": [
+        "algorithm", "cipher", "cipher_suite", "ciphersuite",
+        "encryption_algorithm", "signature_algorithm",
+        "hash_algorithm", "hash_function",
+        "public_key_algorithm"
+      ],
+      "ssl_tls_indicators": [
+        "ssl_protocol", "ssl_cipher", "ssl_ciphers",
+        "tls_version", "tls_cipher", "cipher_suite",
+        "ssl_cert", "ssl_key", "certificate", "private_key"
+      ]
+    },
+    "curve_names": [
+      "P-256", "P-384", "P-521",
+      "prime256v1", "secp256r1", "secp384r1", "secp521r1",
+      "secp256k1",
+      "curve25519", "ed25519"
+    ]
+  },
+
+  "context_awareness": {
+    "file_type_hints": {
+      "apache_config": [
+        "ServerName", "DocumentRoot", "VirtualHost",
+        "SSLEngine", "SSLProtocol"
+      ],
+      "nginx_config": [
+        "server {", "location", "listen",
+        "ssl_protocols", "ssl_certificate"
+      ],
+      "openssl_config": [
+        "[ req ]", "[ ca ]", "distinguished_name",
+        "default_bits", "default_md"
+      ],
+      "openvpn_config": [
+        "dev tun", "proto udp", "remote",
+        "cipher", "auth", "tls-cipher"
+      ]
+    },
+    "log_source_identification": {
+      "apache_access_log": "Combined log format with status codes",
+      "nginx_error_log": "Timestamps with [level] prefix",
+      "syslog": "Standard syslog format with facility and priority",
+      "application_log": "Application-specific format, often JSON or structured text"
+    }
+  },
+
+  "quantum_vulnerability_mapping": {
+    "cipher_suite_to_algorithms": {
+      "TLS_RSA_WITH_AES_128_GCM_SHA256": {
+        "key_exchange": "RSA (quantum-vulnerable)",
+        "authentication": "RSA (quantum-vulnerable)",
+        "encryption": "AES-128-GCM (reduced security under Grover's)",
+        "mac": "SHA256 (acceptable)"
+      },
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384": {
+        "key_exchange": "ECDHE (quantum-vulnerable)",
+        "authentication": "RSA (quantum-vulnerable)",
+        "encryption": "AES-256-GCM (acceptable)",
+        "mac": "SHA384 (acceptable)"
+      },
+      "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256": {
+        "key_exchange": "ECDHE (quantum-vulnerable)",
+        "authentication": "ECDSA (quantum-vulnerable)",
+        "encryption": "AES-128-CBC (reduced security)",
+        "mac": "SHA256-HMAC (acceptable)"
+      },
+      "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA": {
+        "key_exchange": "DHE (quantum-vulnerable)",
+        "authentication": "RSA (quantum-vulnerable)",
+        "encryption": "3DES (weak, quantum-vulnerable)",
+        "mac": "SHA1-HMAC (weak)"
+      }
+    }
+  },
+
+  "confidence_scoring": {
+    "high_confidence": [
+      "Explicit algorithm name in configuration (e.g., cipher: RSA)",
+      "Cipher suite specification (e.g., ECDHE-RSA-AES128-GCM-SHA256)",
+      "Certificate public key algorithm field",
+      "Direct log message stating algorithm (e.g., 'Using RSA-2048')"
+    ],
+    "medium_confidence": [
+      "Indirect algorithm indication (e.g., ssl_dhparam file suggests DH)",
+      "Key size specified without algorithm (e.g., key_size: 2048 likely RSA)",
+      "Error message mentioning algorithm",
+      "Certificate file path without parsing"
+    ],
+    "low_confidence": [
+      "Generic encryption/security mention",
+      "Ambiguous configuration values",
+      "Partial information"
+    ]
+  },
+
+  "common_pitfalls": {
+    "false_positives": [
+      "Comments mentioning algorithms not actually used",
+      "Example configurations not in effect",
+      "Disabled or deprecated settings",
+      "Algorithm names in error messages for unsupported features"
+    ],
+    "false_negatives": [
+      "Custom or proprietary algorithm names",
+      "Encoded or obfuscated configuration",
+      "Binary configuration files",
+      "Algorithms specified through external references"
+    ]
+  },
+
+  "best_practices_for_analysis": {
+    "multi_source_correlation": "Cross-reference configuration files with logs to confirm actual usage",
+    "version_awareness": "Consider software versions (older versions may use weaker crypto)",
+    "default_vs_explicit": "Distinguish between default settings and explicit configuration",
+    "active_vs_legacy": "Identify if settings are currently active or legacy",
+    "compliance_standards": "Note if configurations reference standards (FIPS, PCI DSS, Korean standards)"
+  },
+
+  "output_format_recommendation": {
+    "detected_algorithms": [
+      {
+        "algorithm": "RSA",
+        "key_size": "2048",
+        "quantum_vulnerable": true,
+        "vulnerability_type": "Shor's Algorithm",
+        "source": "SSLCertificateKeyFile /etc/ssl/private/server.key",
+        "file": "/etc/httpd/conf.d/ssl.conf",
+        "line_number": 42,
+        "confidence": "high"
+      },
+      {
+        "algorithm": "SEED-128",
+        "quantum_vulnerable": true,
+        "vulnerability_type": "Grover's Algorithm (reduced security)",
+        "source": "encryption_algorithm: SEED-128-CBC",
+        "file": "/etc/myapp/crypto.yaml",
+        "confidence": "high"
+      }
+    ]
+  }
+}

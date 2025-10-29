@@ -1,0 +1,87 @@
+{
+  "algorithm": "LEA",
+  "type": "fast_block_cipher",
+  "patterns": [
+    {
+      "type": "algorithm_info",
+      "category": "LEA_Overview",
+      "content": "LEA (Lightweight Encryption Algorithm) is a 128-bit block cipher developed by ETRI/NSR (Korea) in 2013 for high-speed encryption. Block size: 128 bits. Key sizes: 128, 192, 256 bits. Rounds: 24, 28, 32 (depending on key size). Structure: ARX (Addition-Rotation-XOR) design for fast software implementation. Quantum resistance: 256-bit key provides 128-bit security against Grover's algorithm.",
+      "confidence": 1.0,
+      "source": "LEA_Specification",
+      "severity": "low",
+      "quantum_resistance": "LEA-256 recommended for quantum resistance (128-bit effective security)"
+    },
+    {
+      "type": "code_pattern",
+      "category": "LEA_Implementation",
+      "content": "LEA implementation patterns: import lea, from lea import LEA, LEA_encrypt(), LEA_decrypt(), lea.new(key, mode). High-performance libraries optimized for x86/ARM processors. Common in Korean crypto frameworks.",
+      "confidence": 0.9,
+      "source": "LEA_Libraries",
+      "keywords": ["import lea", "from lea", "LEA_encrypt", "LEA_decrypt", "lea.new", "LEA.MODE_CBC", "LEA.MODE_GCM"],
+      "file_extensions": [".py", ".c", ".cpp", ".java"],
+      "severity": "low"
+    },
+    {
+      "type": "config_pattern",
+      "category": "LEA_Configuration",
+      "content": "LEA in configuration files: cipher: LEA-256-GCM, encryption_algorithm: LEA, fast_cipher: LEA-256. TLS cipher suites: TLS_ECDHE_RSA_WITH_LEA_256_GCM_SHA384. Commonly used in Korean government/enterprise systems.",
+      "confidence": 0.85,
+      "source": "LEA_Config",
+      "keywords": ["LEA-128", "LEA-192", "LEA-256", "cipher: LEA", "LEA-GCM", "LEA-CBC", "TLS_*_LEA_*"],
+      "severity": "low",
+      "note": "LEA-256-GCM is recommended for AEAD and quantum resistance"
+    },
+    {
+      "type": "binary_signature",
+      "category": "LEA_Binary",
+      "content": "LEA binary signatures: LEA_Encrypt, LEA_Decrypt, LEA_KeySchedule, LEA_EncRound function names. ARX operations: ADD (add), ROL/ROR (rotate), XOR. Round constants delta array. Optimized for 32-bit/64-bit processors.",
+      "confidence": 0.8,
+      "source": "LEA_Binary_Analysis",
+      "keywords": ["LEA_Encrypt", "LEA_Decrypt", "LEA_KeySchedule", "LEA_EncRound", "delta_constants", "ARX"],
+      "severity": "info"
+    },
+    {
+      "type": "performance",
+      "category": "LEA_Speed",
+      "content": "LEA performance characteristics: 1.5-2x faster than AES on software without AES-NI. Optimized for Intel/AMD/ARM processors. 128-bit block operations with efficient key schedule. Ideal for high-throughput applications (VPN, disk encryption).",
+      "confidence": 0.9,
+      "source": "LEA_Performance_Analysis",
+      "severity": "info",
+      "note": "Speed advantage makes it attractive for bulk encryption"
+    },
+    {
+      "type": "vulnerability",
+      "category": "LEA_Quantum",
+      "content": "LEA quantum vulnerability: LEA-128 provides 64-bit security, LEA-192 provides 96-bit, LEA-256 provides 128-bit against quantum computers (Grover's algorithm). LEA-256 is quantum-resistant for foreseeable future. No structural weaknesses found in current cryptanalysis.",
+      "confidence": 1.0,
+      "source": "Quantum_Cryptanalysis",
+      "severity": "low",
+      "recommendation": "Use LEA-256 for long-term security, LEA-256-GCM for AEAD"
+    },
+    {
+      "type": "standard",
+      "category": "LEA_Standards",
+      "content": "LEA standards: Korean standard KS X 1213-1 (2014), ISO/IEC 29192-2:2019 (Lightweight cryptography - Block ciphers), IETF RFC 8998 (LEA Cipher Suites for TLS), Validated by CRYPTREC.",
+      "confidence": 1.0,
+      "source": "Standards_Bodies",
+      "severity": "info"
+    },
+    {
+      "type": "usage_context",
+      "category": "LEA_Usage",
+      "content": "LEA usage context: Korean government cloud services, enterprise VPN, database encryption (TDE), file/disk encryption, IoT gateways, secure messaging. Alternative to AES in performance-critical applications. Widely adopted in Korea.",
+      "confidence": 0.9,
+      "source": "Industry_Practice",
+      "severity": "low"
+    },
+    {
+      "type": "detection_priority",
+      "category": "LEA_Detection",
+      "content": "LEA detection priorities: HIGH - LEA-128 in long-term storage (upgrade to LEA-256), MEDIUM - ECB mode usage (use GCM/CTR), LOW - LEA-256-GCM with proper nonce management. Check key size and mode of operation.",
+      "confidence": 0.85,
+      "source": "Security_Guidelines",
+      "severity": "info",
+      "recommendation": "LEA-256-GCM is the recommended configuration"
+    }
+  ]
+}

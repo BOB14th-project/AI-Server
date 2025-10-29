@@ -1,0 +1,78 @@
+{
+  "algorithm": "HIGHT",
+  "type": "lightweight_block_cipher",
+  "patterns": [
+    {
+      "type": "algorithm_info",
+      "category": "HIGHT_Overview",
+      "content": "HIGHT (High Security and Light Weight) is a 64-bit lightweight block cipher developed by KISA in 2006 for resource-constrained environments. Block size: 64 bits. Key size: 128 bits. Rounds: 32. Structure: Generalized Feistel Network. Designed for RFID, USN, IoT devices. Quantum vulnerability: 64-bit block size is weak, 128-bit key becomes 64-bit effective against quantum.",
+      "confidence": 1.0,
+      "source": "HIGHT_Specification",
+      "severity": "medium",
+      "quantum_resistance": "Weak - 64-bit block cipher vulnerable to birthday attacks, 128-bit key → 64-bit quantum security"
+    },
+    {
+      "type": "code_pattern",
+      "category": "HIGHT_Implementation",
+      "content": "HIGHT implementation patterns: import hight, from hight import HIGHT, HIGHT_encrypt(), HIGHT_decrypt(), hight_key_schedule(). Lightweight crypto libraries for embedded systems.",
+      "confidence": 0.9,
+      "source": "HIGHT_Libraries",
+      "keywords": ["import hight", "HIGHT_encrypt", "HIGHT_decrypt", "hight_key_schedule", "HIGHT.new"],
+      "file_extensions": [".c", ".h", ".py", ".ino"],
+      "severity": "medium"
+    },
+    {
+      "type": "config_pattern",
+      "category": "HIGHT_Configuration",
+      "content": "HIGHT in IoT/embedded configurations: cipher: HIGHT-128, lightweight_cipher: HIGHT, block_algorithm: HIGHT-64. Common in Korean IoT devices, smart cards, RFID tags.",
+      "confidence": 0.85,
+      "source": "HIGHT_IoT",
+      "keywords": ["HIGHT-128", "cipher: HIGHT", "lightweight_cipher: HIGHT", "HIGHT-64"],
+      "severity": "medium",
+      "note": "64-bit block size is vulnerable to Sweet32 attack"
+    },
+    {
+      "type": "binary_signature",
+      "category": "HIGHT_Binary",
+      "content": "HIGHT binary signatures: HIGHT_Encrypt, HIGHT_Decrypt, HIGHT_KeySchedule, HIGHT_F0, HIGHT_F1 functions. Characteristic constants: delta array for round key generation. 32 rounds with simple operations (XOR, rotation, addition).",
+      "confidence": 0.8,
+      "source": "HIGHT_Binary_Analysis",
+      "keywords": ["HIGHT_Encrypt", "HIGHT_Decrypt", "HIGHT_KeySchedule", "delta_array", "32 rounds"],
+      "severity": "info"
+    },
+    {
+      "type": "vulnerability",
+      "category": "HIGHT_Security",
+      "content": "HIGHT security concerns: 64-bit block size vulnerable to birthday attacks after 2^32 blocks (~32GB with same key). Quantum: Grover reduces 128-bit key to 64-bit security. Sweet32 attack possible with long sessions. Recommend migration to 128-bit block ciphers.",
+      "confidence": 1.0,
+      "source": "HIGHT_Security_Analysis",
+      "severity": "high",
+      "recommendation": "Replace with AES-128 or LEA-128 for IoT, ASCON for ultra-lightweight"
+    },
+    {
+      "type": "standard",
+      "category": "HIGHT_Standards",
+      "content": "HIGHT standards: Korean standard TTAS.KO-12.0040 (2006), ISO/IEC 18033-3:2010 Amendment 1 (2021), Lightweight cryptography for IoT/RFID, Evaluated by CRYPTREC.",
+      "confidence": 1.0,
+      "source": "Standards_Bodies",
+      "severity": "info"
+    },
+    {
+      "type": "usage_context",
+      "category": "HIGHT_Usage",
+      "content": "HIGHT usage: RFID/NFC tags, smart cards, wireless sensor networks (WSN), IoT devices (esp. Korean market), embedded systems with limited resources. Hardware-efficient design but security limitations.",
+      "confidence": 0.9,
+      "source": "Industry_Practice",
+      "severity": "medium"
+    },
+    {
+      "type": "detection_priority",
+      "category": "HIGHT_Detection",
+      "content": "HIGHT detection priorities: CRITICAL - Long-running sessions (>2^32 blocks), HIGH - Production IoT devices, MEDIUM - Test/development environments. Check for block counter limits and key rotation policies.",
+      "confidence": 0.85,
+      "source": "Security_Guidelines",
+      "severity": "high",
+      "note": "64-bit block ciphers should not encrypt more than 32GB with same key"
+    }
+  ]
+}

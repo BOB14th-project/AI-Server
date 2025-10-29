@@ -1,0 +1,265 @@
+{
+  "description": "Structural patterns for detecting cryptographic algorithms without explicit string mentions",
+  "patterns": [
+    {
+      "type": "structural_pattern",
+      "category": "RSA_Mathematical_Structure",
+      "algorithm": "RSA",
+      "content": "RSA algorithm structural indicators: (1) Modular exponentiation operations (base^exp mod n), (2) Large integer arithmetic (typically 2048/4096 bits), (3) Two-prime number multiplication for modulus generation, (4) Euler's totient function φ(n) = (p-1)(q-1) computation, (5) Extended Euclidean algorithm for finding modular inverse, (6) Public exponent often 65537 (0x10001), (7) CRT (Chinese Remainder Theorem) optimization in decryption with dp, dq, qinv parameters.",
+      "code_indicators": [
+        "modular exponentiation loops",
+        "prime number generation (Miller-Rabin test)",
+        "large number multiplication (>1024 bits)",
+        "GCD and extended GCD functions",
+        "modular inverse calculation",
+        "two exponentiations with different exponents (encrypt/decrypt)",
+        "CRT parameter computation (dp = d mod (p-1), dq = d mod (q-1))"
+      ],
+      "mathematical_constants": [
+        "65537 (common public exponent e)",
+        "3 (another common public exponent)",
+        "0x10001 (hex representation of 65537)"
+      ],
+      "confidence": 0.95,
+      "source": "RSA_Algorithm_Analysis",
+      "severity": "critical",
+      "quantum_vulnerable": true
+    },
+    {
+      "type": "structural_pattern",
+      "category": "ECDSA_Mathematical_Structure",
+      "algorithm": "ECDSA",
+      "content": "ECDSA (Elliptic Curve Digital Signature) structural indicators: (1) Point addition and point doubling operations on elliptic curves, (2) Scalar multiplication (k·G where G is generator point), (3) Curve parameters: a, b for equation y² = x³ + ax + b, (4) Base point G with order n, (5) Modular arithmetic over prime field Fp, (6) Hash-to-scalar conversion, (7) Signature format (r, s) where r = (kG).x mod n and s = k⁻¹(hash + r·privkey) mod n.",
+      "code_indicators": [
+        "elliptic curve point operations (add, double, multiply)",
+        "field arithmetic modulo large prime",
+        "scalar multiplication with 256-bit integers",
+        "point coordinate calculations (x, y)",
+        "signature tuple (r, s) generation",
+        "nonce (k) generation with randomness",
+        "modular inverse for s calculation",
+        "curve parameter validation (a, b, p, n, G)"
+      ],
+      "mathematical_constants": [
+        "secp256k1 parameters (Bitcoin): p = 2^256 - 2^32 - 977",
+        "secp256r1/P-256 prime: p = 2^256 - 2^224 + 2^192 + 2^96 - 1",
+        "Generator point G coordinates (fixed for each curve)",
+        "Curve order n (number of points on curve)"
+      ],
+      "confidence": 0.9,
+      "source": "ECDSA_Algorithm_Analysis",
+      "severity": "critical",
+      "quantum_vulnerable": true
+    },
+    {
+      "type": "structural_pattern",
+      "category": "AES_Structural_Pattern",
+      "algorithm": "AES",
+      "content": "AES block cipher structural indicators: (1) 128-bit (16-byte) block operations, (2) SubBytes transformation using S-box lookup (256-entry table), (3) ShiftRows: circular byte shifts by 0,1,2,3 positions, (4) MixColumns: matrix multiplication in GF(2^8), (5) AddRoundKey: XOR with round key, (6) Key schedule expansion: 128-bit key → 176 bytes (11 round keys for AES-128), (7) 10/12/14 rounds for 128/192/256-bit keys, (8) Galois Field GF(2^8) arithmetic with irreducible polynomial 0x11B.",
+      "code_indicators": [
+        "16-byte block processing in loops",
+        "256-entry lookup table (S-box)",
+        "byte substitution operations",
+        "row shifting by fixed offsets (1,2,3)",
+        "column mixing with Galois field multiplication",
+        "XOR operations with round keys",
+        "10-14 round iterations",
+        "key expansion generating 11-15 round keys",
+        "inverse operations for decryption (InvSubBytes, InvShiftRows, InvMixColumns)"
+      ],
+      "mathematical_constants": [
+        "0x11B (irreducible polynomial for GF(2^8))",
+        "S-box values: [0x63, 0x7C, 0x77, 0x7B, ...]",
+        "Round constants (Rcon): [0x01, 0x02, 0x04, 0x08, 0x10, ...]",
+        "MixColumns matrix: [02 03 01 01; 01 02 03 01; ...]"
+      ],
+      "confidence": 0.95,
+      "source": "AES_Algorithm_Analysis",
+      "severity": "low",
+      "quantum_vulnerable": false,
+      "note": "AES is quantum-resistant but detectable by structure"
+    },
+    {
+      "type": "structural_pattern",
+      "category": "DH_Key_Exchange_Structure",
+      "algorithm": "Diffie-Hellman",
+      "content": "Diffie-Hellman key exchange structural indicators: (1) Modular exponentiation: g^a mod p, (2) Large prime modulus p (2048+ bits), (3) Generator g (primitive root modulo p), (4) Shared secret computation: (g^b)^a mod p = g^(ab) mod p, (5) Parameter validation (checking p is prime, g has correct order), (6) Optional: Discrete logarithm problem assumption.",
+      "code_indicators": [
+        "modular exponentiation with same base and modulus",
+        "large prime number (p) as modulus",
+        "generator value g (often 2 or 5)",
+        "private exponent generation (random)",
+        "public value computation (g^private mod p)",
+        "shared secret derivation from received public value",
+        "prime validation (Miller-Rabin primality test)"
+      ],
+      "mathematical_constants": [
+        "Common safe primes (e.g., RFC 3526 MODP groups)",
+        "Generator g = 2 or 5",
+        "Group 14: 2048-bit MODP",
+        "Group 15: 3072-bit MODP"
+      ],
+      "confidence": 0.9,
+      "source": "DH_Algorithm_Analysis",
+      "severity": "critical",
+      "quantum_vulnerable": true
+    },
+    {
+      "type": "structural_pattern",
+      "category": "SHA2_Hash_Structure",
+      "algorithm": "SHA-2",
+      "content": "SHA-2 hash function structural indicators: (1) Message padding to 512-bit blocks, (2) 64 rounds of compression function, (3) Initial hash values (H0-H7) specific to SHA-256/384/512, (4) Logical functions: Ch(x,y,z), Maj(x,y,z), Σ0, Σ1, σ0, σ1, (5) 64 constant values K[0..63], (6) Message schedule (W) expansion from 16 to 64/80 words, (7) Working variables a,b,c,d,e,f,g,h updated in each round.",
+      "code_indicators": [
+        "512-bit (64-byte) block processing",
+        "64 or 80 round iterations",
+        "8 working variables (a-h)",
+        "right rotation operations (ROTR)",
+        "bit-wise logical operations (AND, OR, XOR, NOT)",
+        "32-bit or 64-bit word operations",
+        "message schedule array expansion",
+        "constant array K with 64 elements",
+        "initial hash value array H"
+      ],
+      "mathematical_constants": [
+        "SHA-256 K constants: [0x428a2f98, 0x71374491, ...]",
+        "SHA-256 initial H: [0x6a09e667, 0xbb67ae85, ...]",
+        "SHA-512 K constants (64-bit values)",
+        "Rotation amounts: 2, 6, 7, 11, 13, 17, 18, 19, 22, 25"
+      ],
+      "confidence": 0.95,
+      "source": "SHA2_Algorithm_Analysis",
+      "severity": "low",
+      "quantum_vulnerable": false
+    },
+    {
+      "type": "structural_pattern",
+      "category": "SEED_Block_Cipher_Structure",
+      "algorithm": "SEED",
+      "content": "SEED (Korean block cipher) structural indicators: (1) 128-bit block size, (2) 128-bit key, (3) 16 rounds of Feistel network, (4) F-function with two G-functions, (5) Four 8×8 S-boxes (SS0, SS1, SS2, SS3), (6) Key schedule generating 32 round keys (each 32-bit), (7) Byte-oriented operations with XOR and addition.",
+      "code_indicators": [
+        "128-bit (16-byte) input/output blocks",
+        "Feistel structure: L and R halves swapping",
+        "16 round iterations",
+        "F-function with complex byte operations",
+        "Four S-box tables (256 entries each)",
+        "Round key array (32 keys × 32 bits)",
+        "G-function: S-box lookups and XOR",
+        "Key schedule with rotation and XOR"
+      ],
+      "mathematical_constants": [
+        "SS0, SS1, SS2, SS3 S-box values (specific to SEED)",
+        "Key constants KC0-KC15 for key schedule",
+        "Rotation amounts in key schedule"
+      ],
+      "confidence": 0.85,
+      "source": "SEED_Algorithm_Analysis",
+      "severity": "medium",
+      "quantum_vulnerable": false,
+      "note": "Korean standard cipher, quantum-resistant but 128-bit key"
+    },
+    {
+      "type": "structural_pattern",
+      "category": "ARIA_Block_Cipher_Structure",
+      "algorithm": "ARIA",
+      "content": "ARIA (Korean block cipher) structural indicators: (1) 128-bit block size, (2) 128/192/256-bit keys, (3) 12/14/16 rounds (depending on key size), (4) Substitution-Permutation Network (SPN) structure, (5) Two types of S-boxes (S1, S2) used alternately, (6) Diffusion layer with involutory matrix multiplication, (7) Key schedule producing round keys.",
+      "code_indicators": [
+        "128-bit block operations",
+        "SPN structure (unlike Feistel)",
+        "Alternating S-box layers (S1, S2)",
+        "Diffusion layer with matrix multiplication",
+        "12-16 rounds depending on key size",
+        "Byte substitution with two S-box types",
+        "Key addition (XOR) at each round",
+        "Involutory property (encryption = decryption structure)"
+      ],
+      "mathematical_constants": [
+        "S-box S1 and S2 values (specific to ARIA)",
+        "Involutory diffusion matrix A",
+        "Round constants C1, C2, C3 in key schedule"
+      ],
+      "confidence": 0.85,
+      "source": "ARIA_Algorithm_Analysis",
+      "severity": "low",
+      "quantum_vulnerable": false,
+      "note": "Korean standard, quantum-resistant"
+    },
+    {
+      "type": "structural_pattern",
+      "category": "Custom_Prime_Field_Arithmetic",
+      "algorithm": "Generic_ECC",
+      "content": "Generic Elliptic Curve Cryptography detection: (1) Prime field arithmetic modulo large prime (256-521 bits), (2) Point representation as (x, y) coordinate pairs, (3) Projective or Jacobian coordinates for optimization, (4) Point at infinity handling (identity element), (5) Montgomery ladder or double-and-add for scalar multiplication, (6) Constant-time operations to prevent timing attacks.",
+      "code_indicators": [
+        "modulo operations with 256+ bit primes",
+        "coordinate pair (x, y) structures",
+        "point doubling formulas: (x₃, y₃) = 2·(x₁, y₁)",
+        "point addition formulas: (x₃, y₃) = (x₁, y₁) + (x₂, y₂)",
+        "scalar multiplication loops",
+        "infinity point checks",
+        "Montgomery ladder pattern",
+        "constant-time conditional swaps"
+      ],
+      "mathematical_constants": [
+        "Large prime moduli (curve-specific)",
+        "Curve parameters a and b",
+        "Generator point coordinates"
+      ],
+      "confidence": 0.8,
+      "source": "ECC_Generic_Analysis",
+      "severity": "critical",
+      "quantum_vulnerable": true
+    },
+    {
+      "type": "structural_pattern",
+      "category": "LSH_Hash_Structure",
+      "algorithm": "LSH",
+      "content": "LSH (Korean hash function) structural indicators: (1) 1024-bit message blocks (LSH-256) or 2048-bit (LSH-512), (2) 256/512-bit output, (3) ARX operations: Addition, Rotation, XOR, (4) Step function with Mix and WordPerm, (5) Compression function CF, (6) Initialization vector (IV) specific to output size, (7) Parallel processing of 16 or 32 words.",
+      "code_indicators": [
+        "1024 or 2048-bit block processing",
+        "ARX operations (no S-boxes or complex operations)",
+        "Addition modulo 2^32 or 2^64",
+        "Rotation by fixed amounts",
+        "XOR operations",
+        "Mix function processing word pairs",
+        "Word permutation (WordPerm)",
+        "16 or 32-word state array"
+      ],
+      "mathematical_constants": [
+        "LSH-256 IV values (16 × 32-bit words)",
+        "LSH-512 IV values (32 × 64-bit words)",
+        "Rotation constants (specific to LSH)",
+        "Step constants"
+      ],
+      "confidence": 0.8,
+      "source": "LSH_Algorithm_Analysis",
+      "severity": "low",
+      "quantum_vulnerable": false,
+      "note": "Korean hash function, quantum-resistant"
+    },
+    {
+      "type": "structural_pattern",
+      "category": "Modular_Exponentiation_Pattern",
+      "algorithm": "Generic_Asymmetric",
+      "content": "Generic modular exponentiation detection (RSA, DH, DSA): (1) Square-and-multiply algorithm, (2) Montgomery multiplication for optimization, (3) Sliding window exponentiation, (4) Binary exponentiation loops, (5) Large integer (1024+ bit) operations, (6) Temporary variables for intermediate results.",
+      "code_indicators": [
+        "loop iterating over exponent bits",
+        "squaring operation in each iteration",
+        "conditional multiplication based on bit value",
+        "modulo reduction after operations",
+        "Montgomery form conversions (R, R⁻¹)",
+        "window-based precomputation tables",
+        "multi-precision integer arrays",
+        "carry propagation in multiplication"
+      ],
+      "mathematical_constants": [
+        "Montgomery constant R = 2^(word_size × num_words)",
+        "Precomputed modular inverse",
+        "Window size (typically 4-6 bits)"
+      ],
+      "confidence": 0.85,
+      "source": "Modular_Math_Analysis",
+      "severity": "high",
+      "quantum_vulnerable": true,
+      "note": "Generic pattern for detecting any public-key crypto using modular exponentiation"
+    }
+  ]
+}

@@ -1,0 +1,805 @@
+{
+  "document_type": "RAG Knowledge Base for Assembly Binary Agent",
+  "version": "1.0",
+  "purpose": "Reference document for detecting quantum-vulnerable cryptographic algorithms in assembly code and binary executables",
+  "agent_type": "assembly_binary",
+
+  "detection_approach": {
+    "description": "Assembly-level detection requires recognizing low-level cryptographic patterns",
+    "challenges": [
+      "No explicit algorithm names",
+      "Compiler optimizations change code structure",
+      "Different calling conventions",
+      "Inlined functions",
+      "Stripped binaries (no symbols)"
+    ],
+    "strategies": [
+      "Recognize mathematical operation sequences",
+      "Identify cryptographic constants",
+      "Detect library function calls",
+      "Analyze data flow patterns",
+      "Find characteristic loop structures"
+    ]
+  },
+
+  "quantum_vulnerable_signatures": {
+    "rsa_signatures": {
+      "description": "RSA operations in assembly",
+      "key_operations": {
+        "modular_exponentiation": {
+          "description": "Core RSA operation: C = M^e mod N",
+          "assembly_patterns": {
+            "x86_64": [
+              "Square-and-multiply algorithm loops",
+              "MUL/IMUL instructions for large integers",
+              "DIV/IDIV for modular reduction",
+              "Repeated squaring pattern",
+              "Montgomery multiplication sequences"
+            ],
+            "arm": [
+              "UMULL (unsigned multiply long)",
+              "UMLAL (unsigned multiply accumulate long)",
+              "Loop structures for multi-precision arithmetic"
+            ]
+          },
+          "loop_characteristics": {
+            "bit_scanning": "Loop iterating over key bits (1024, 2048, 4096 iterations)",
+            "conditional_multiply": "Conditional execution based on bit value",
+            "square_every_iteration": "Squaring operation in each loop iteration"
+          },
+          "code_example_x86": [
+            "; Modular exponentiation loop",
+            "mov rcx, [key_bits]      ; Load key size (e.g., 2048)",
+            "loop_start:",
+            "  shl rax, 1              ; Left shift (square)",
+            "  test rbx, rcx           ; Test key bit",
+            "  jz skip_multiply",
+            "  imul rax, [base]        ; Conditional multiply",
+            "  skip_multiply:",
+            "  call montgomery_reduce  ; Modular reduction",
+            "  loop loop_start"
+          ]
+        },
+        "large_integer_arithmetic": {
+          "description": "Multi-precision integer operations (1024+ bits)",
+          "indicators": [
+            "Arrays of 32/64-bit words (16-64 words for RSA)",
+            "Carry propagation loops",
+            "ADC (add with carry) chains",
+            "SBB (subtract with borrow) chains"
+          ],
+          "memory_patterns": {
+            "rsa_1024": "16 x 64-bit words or 32 x 32-bit words",
+            "rsa_2048": "32 x 64-bit words or 64 x 32-bit words",
+            "rsa_4096": "64 x 64-bit words"
+          },
+          "code_example_x86": [
+            "; Multi-precision addition",
+            "xor rcx, rcx            ; Clear carry",
+            "mov r8, 32              ; Loop counter (2048-bit / 64-bit)",
+            "add_loop:",
+            "  mov rax, [rsi + rcx*8]",
+            "  adc rax, [rdi + rcx*8] ; Add with carry",
+            "  mov [rdx + rcx*8], rax",
+            "  inc rcx",
+            "  dec r8",
+            "  jnz add_loop"
+          ]
+        },
+        "montgomery_multiplication": {
+          "description": "Optimized modular multiplication for RSA",
+          "characteristics": [
+            "Pre-computed Montgomery constant R = 2^n mod N",
+            "REDC (Montgomery reduction) function",
+            "Multiplication followed by reduction",
+            "Avoiding expensive division operations"
+          ],
+          "assembly_indicators": [
+            "Multiplication by pre-computed constant",
+            "Right shift by word size (32 or 64)",
+            "Conditional subtraction of modulus"
+          ]
+        },
+        "chinese_remainder_theorem": {
+          "description": "CRT optimization for RSA private key operations",
+          "indicators": [
+            "Two parallel modular exponentiations (with p and q)",
+            "CRT combination step",
+            "References to dP, dQ, qInv parameters",
+            "Smaller exponentiation operations (half size of full RSA)"
+          ],
+          "code_pattern": [
+            "Computing m1 = c^dP mod p",
+            "Computing m2 = c^dQ mod q",
+            "Combining: m = (m1 + q * ((m2 - m1) * qInv mod q)) mod N"
+          ]
+        }
+      },
+      "cryptographic_constants": {
+        "public_exponent": {
+          "common_values": ["0x10001 (65537)", "0x03", "0x07"],
+          "description": "Small public exponent e",
+          "detection": "Look for these exact values in immediate operands or data section"
+        },
+        "key_sizes": {
+          "values": ["1024", "2048", "3072", "4096"],
+          "detection": "Loop counters, buffer sizes, bit length checks"
+        }
+      },
+      "library_function_calls": {
+        "openssl": [
+          "RSA_public_encrypt",
+          "RSA_private_decrypt",
+          "RSA_sign",
+          "RSA_verify",
+          "BN_mod_exp (Big Number modular exponentiation)"
+        ],
+        "windows_cng": [
+          "BCryptGenerateKeyPair",
+          "BCryptEncrypt with BCRYPT_RSA_ALGORITHM"
+        ],
+        "detection_method": "Symbol table analysis, import address table (IAT), or call instruction targets"
+      }
+    },
+
+    "ecc_signatures": {
+      "description": "Elliptic Curve Cryptography in assembly",
+      "key_operations": {
+        "point_multiplication": {
+          "description": "Scalar multiplication k*P (core ECC operation)",
+          "algorithm_variants": [
+            "Double-and-add algorithm",
+            "Montgomery ladder (constant-time)",
+            "Windowed methods (w-NAF)"
+          ],
+          "assembly_patterns": {
+            "double_and_add": [
+              "Loop over scalar bits",
+              "Point doubling in every iteration",
+              "Conditional point addition",
+              "Similar to RSA square-and-multiply but on curve points"
+            ],
+            "montgomery_ladder": [
+              "Two point variables maintained",
+              "Constant-time execution (no conditional branches on secret)",
+              "Point addition and doubling in each iteration"
+            ]
+          },
+          "code_example_x86": [
+            "; Scalar multiplication loop",
+            "mov rcx, 256            ; Curve bit size (e.g., P-256)",
+            "scalar_mult_loop:",
+            "  call point_double      ; Q = 2*Q",
+            "  test [scalar + rcx/8], bit_mask",
+            "  jz skip_add",
+            "  call point_add         ; Q = Q + P",
+            "  skip_add:",
+            "  loop scalar_mult_loop"
+          ]
+        },
+        "point_addition": {
+          "description": "Adding two points on elliptic curve: P + Q = R",
+          "formula": "λ = (yQ - yP) / (xQ - xP); xR = λ² - xP - xQ; yR = λ(xP - xR) - yP",
+          "assembly_indicators": [
+            "Field arithmetic (addition, subtraction, multiplication, inversion)",
+            "Modular operations with curve prime p",
+            "Multiple multiplication and squaring operations",
+            "Division or modular inversion (extended Euclidean algorithm)"
+          ],
+          "computational_pattern": [
+            "3-4 field multiplications",
+            "1 field inversion (expensive)",
+            "2-3 field subtractions",
+            "1-2 field squarings"
+          ]
+        },
+        "point_doubling": {
+          "description": "Doubling a point on elliptic curve: 2P = R",
+          "formula": "λ = (3xP² + a) / (2yP); xR = λ² - 2xP; yR = λ(xP - xR) - yP",
+          "assembly_indicators": [
+            "Similar to point addition but different formula",
+            "Squaring of x-coordinate",
+            "Multiplication by curve parameter a",
+            "Doubling of y-coordinate"
+          ]
+        },
+        "field_arithmetic": {
+          "description": "Arithmetic modulo curve prime p",
+          "operations": {
+            "modular_multiplication": {
+              "patterns": [
+                "Multiply two field elements",
+                "Reduce result modulo p",
+                "Barrett reduction or Montgomery reduction"
+              ]
+            },
+            "modular_inversion": {
+              "patterns": [
+                "Extended Euclidean algorithm",
+                "Fermat's little theorem: a^(p-2) mod p",
+                "Sequence of multiplications and squarings"
+              ],
+              "expensive": "Most expensive operation in point addition"
+            },
+            "modular_squaring": {
+              "patterns": [
+                "Optimized multiplication where both operands are same",
+                "Followed by modular reduction"
+              ]
+            }
+          }
+        }
+      },
+      "curve_parameters": {
+        "description": "Elliptic curve constants in binary",
+        "nist_curves": {
+          "P-256": {
+            "prime_p": "0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF",
+            "order_n": "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551",
+            "coefficient_a": "-3 (or 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC)",
+            "coefficient_b": "0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B"
+          },
+          "P-384": {
+            "detection": "384-bit (48-byte) prime and order values"
+          },
+          "P-521": {
+            "detection": "521-bit prime (note: not 512, detection hint)"
+          }
+        },
+        "secp256k1": {
+          "description": "Bitcoin/Ethereum curve",
+          "prime_p": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F",
+          "order_n": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
+        },
+        "curve25519": {
+          "description": "Montgomery curve for ECDH",
+          "prime": "2^255 - 19",
+          "detection": [
+            "Operations modulo 2^255 - 19",
+            "Montgomery curve formulas (different from Weierstrass)"
+          ]
+        },
+        "detection_method": "Search for these large constants in .data or .rodata sections"
+      },
+      "library_function_calls": {
+        "openssl": [
+          "EC_POINT_mul",
+          "EC_POINT_add",
+          "EC_POINT_dbl",
+          "ECDSA_sign",
+          "ECDH_compute_key"
+        ],
+        "detection": "Function names in symbol table or characteristic call patterns"
+      }
+    },
+
+    "diffie_hellman_dsa_signatures": {
+      "description": "DH and DSA assembly patterns",
+      "operations": {
+        "modular_exponentiation": {
+          "description": "Similar to RSA: g^x mod p",
+          "difference_from_rsa": [
+            "Typically fixed generator g (small value like 2 or 5)",
+            "Large prime modulus p (2048-4096 bits)",
+            "Exponent x is private key (256-512 bits)"
+          ],
+          "assembly_pattern": "Similar to RSA modular exponentiation but with fixed base"
+        },
+        "dh_key_exchange": {
+          "steps": [
+            "Compute public key: g^a mod p",
+            "Receive peer's public key: g^b mod p",
+            "Compute shared secret: (g^b)^a mod p"
+          ],
+          "detection": [
+            "Two modular exponentiation calls",
+            "Using same prime modulus p",
+            "Final result used as key material"
+          ]
+        },
+        "dsa_signature": {
+          "steps": [
+            "Generate random k",
+            "Compute r = (g^k mod p) mod q",
+            "Compute s = (H(m) + x*r) / k mod q"
+          ],
+          "assembly_indicators": [
+            "Random number generation",
+            "Two modular operations (mod p and mod q)",
+            "Hash function call",
+            "Modular inversion of k"
+          ]
+        }
+      },
+      "dh_parameters": {
+        "prime_sizes": ["2048", "3072", "4096", "8192"],
+        "generators": ["2", "5"],
+        "detection": "Large prime constants and small generator values"
+      }
+    },
+
+    "symmetric_cipher_signatures": {
+      "description": "Block cipher and stream cipher patterns",
+      "aes_signatures": {
+        "s_box": {
+          "description": "AES S-box lookup table (256 bytes)",
+          "content": "Starts with: 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5...",
+          "detection": "Look for this exact 256-byte array in .data/.rodata",
+          "usage_pattern": [
+            "Array indexing with byte value",
+            "Used in SubBytes operation",
+            "May be combined with other operations (T-tables)"
+          ]
+        },
+        "t_tables": {
+          "description": "Optimized AES lookup tables (4 x 256 x 4 bytes)",
+          "detection": "Four 1KB tables or combined 4KB table",
+          "usage": "Table lookups in AES round function"
+        },
+        "round_structure": {
+          "aes_128": "10 rounds",
+          "aes_192": "12 rounds",
+          "aes_256": "14 rounds",
+          "detection": [
+            "Fixed loop count (10, 12, or 14)",
+            "S-box lookups per round",
+            "XOR with round keys",
+            "MixColumns matrix multiplication (except last round)"
+          ]
+        },
+        "key_schedule": {
+          "description": "Expanding encryption key to round keys",
+          "patterns": [
+            "RotWord operation (rotate 32-bit word)",
+            "SubWord operation (apply S-box to word)",
+            "Rcon (round constant) array: [0x01, 0x02, 0x04, 0x08, 0x10, ...]",
+            "XOR operations to generate round keys"
+          ],
+          "rcon_detection": "Look for powers of 2 array in GF(2^8)"
+        },
+        "aesni_instructions": {
+          "description": "Intel AES-NI hardware acceleration",
+          "instructions": [
+            "AESENC - AES encrypt round",
+            "AESENCLAST - AES encrypt last round",
+            "AESDEC - AES decrypt round",
+            "AESDECLAST - AES decrypt last round",
+            "AESKEYGENASSIST - AES key expansion",
+            "AESIMC - AES inverse mix columns"
+          ],
+          "detection": "Presence of these opcodes indicates AES usage",
+          "opcode_examples": [
+            "0x66 0x0F 0x38 0xDC (AESENC)",
+            "0x66 0x0F 0x38 0xDD (AESENCLAST)"
+          ]
+        }
+      },
+      "des_3des_signatures": {
+        "initial_permutation": {
+          "description": "DES initial permutation (IP) table",
+          "detection": "64-byte permutation table",
+          "values": "Starts with: 58, 50, 42, 34, 26, 18, 10, 2..."
+        },
+        "s_boxes": {
+          "description": "8 S-boxes, each 4x16 values",
+          "detection": "Eight 64-byte lookup tables",
+          "usage": "6-bit input → 4-bit output transformation"
+        },
+        "round_structure": {
+          "des": "16 rounds",
+          "3des": "48 rounds (16 x 3 with different keys)",
+          "detection": "Feistel structure with 16-round loop"
+        },
+        "key_schedule": {
+          "description": "56-bit key → 16 x 48-bit round keys",
+          "patterns": [
+            "Permuted Choice 1 (PC-1)",
+            "Left rotations (1 or 2 bits per round)",
+            "Permuted Choice 2 (PC-2)"
+          ]
+        }
+      },
+      "korean_cipher_signatures": {
+        "seed": {
+          "description": "Korean SEED cipher assembly patterns",
+          "round_count": "16 rounds",
+          "block_size": "128 bits (16 bytes)",
+          "key_size": "128 bits (16 bytes)",
+          "structure": "Feistel network",
+          "s_boxes": {
+            "ss0_ss1": "Two 8-bit S-boxes (256 bytes each)",
+            "detection": "Look for two 256-byte lookup tables with specific values"
+          },
+          "f_function": {
+            "description": "Round function using S-boxes and key mixing",
+            "operations": [
+              "XOR with round keys",
+              "S-box lookups (SS0, SS1)",
+              "Endian conversion functions",
+              "32-bit rotations and XORs"
+            ]
+          },
+          "key_schedule": {
+            "description": "Generate 16 round keys from master key",
+            "patterns": [
+              "G-function for key expansion",
+              "Rotation and XOR operations",
+              "Uses constants KC (key constant array)"
+            ]
+          },
+          "constants": {
+            "kc_array": "Key constants used in key schedule",
+            "detection": "Specific 32-bit constant array in data section"
+          }
+        },
+        "aria": {
+          "description": "Korean ARIA cipher (AES alternative)",
+          "round_count": {
+            "aria_128": "12 rounds",
+            "aria_192": "14 rounds",
+            "aria_256": "16 rounds"
+          },
+          "block_size": "128 bits",
+          "structure": "Substitution-Permutation Network (SPN) with involution",
+          "s_boxes": {
+            "s1_s2": "Two S-boxes with involution property",
+            "s1_inverse": "S1 inverse",
+            "s2_inverse": "S2 inverse",
+            "detection": "Four 256-byte lookup tables"
+          },
+          "diffusion_layer": {
+            "description": "Linear transformation layer",
+            "operations": [
+              "XOR operations on 32-bit words",
+              "Rotation operations",
+              "Involutory property (applying twice gives identity)"
+            ]
+          }
+        },
+        "lea": {
+          "description": "Lightweight Encryption Algorithm",
+          "round_count": {
+            "lea_128": "24 rounds",
+            "lea_192": "28 rounds",
+            "lea_256": "32 rounds"
+          },
+          "block_size": "128 bits (4 x 32-bit words)",
+          "structure": "ARX (Add-Rotate-XOR)",
+          "operations": {
+            "description": "Only uses modular addition, rotation, and XOR",
+            "no_s_boxes": "No lookup tables, only arithmetic/logical operations",
+            "assembly_pattern": [
+              "ADD instructions (modular addition)",
+              "ROL/ROR instructions (rotation)",
+              "XOR instructions",
+              "Pattern repeats for 24/28/32 rounds"
+            ]
+          },
+          "detection_hints": [
+            "Specific rotation amounts (9, 5, 3 bits)",
+            "128-bit state processed as four 32-bit words",
+            "No division, multiplication, or lookup tables",
+            "Many rounds (24+)"
+          ]
+        },
+        "hight": {
+          "description": "High Security and Light Weight",
+          "round_count": "32 rounds",
+          "block_size": "64 bits (8 bytes)",
+          "key_size": "128 bits",
+          "structure": "Generalized Feistel network",
+          "operations": [
+            "Simple operations for low-resource devices",
+            "XOR and modular addition only",
+            "No S-boxes (lightweight)"
+          ],
+          "detection": [
+            "32-round loop",
+            "64-bit block operations",
+            "Simple XOR/ADD patterns"
+          ]
+        }
+      }
+    },
+
+    "hash_function_signatures": {
+      "description": "Cryptographic hash functions in assembly",
+      "md5_signatures": {
+        "constants": {
+          "description": "MD5 uses 64 constants (K table)",
+          "first_values": ["0xd76aa478", "0xe8c7b756", "0x242070db", "0xc1bdceee"],
+          "detection": "Look for these exact 32-bit values in data section"
+        },
+        "round_structure": "64 operations in 4 rounds (16 operations each)",
+        "operations": [
+          "F(B,C,D) = (B AND C) OR (NOT B AND D)",
+          "G(B,C,D) = (B AND D) OR (C AND NOT D)",
+          "H(B,C,D) = B XOR C XOR D",
+          "I(B,C,D) = C XOR (B OR NOT D)"
+        ],
+        "assembly_indicators": [
+          "4 state variables (A, B, C, D - 128 bits total)",
+          "Left rotation operations",
+          "Modular addition",
+          "Logical operations (AND, OR, XOR, NOT)"
+        ]
+      },
+      "sha1_signatures": {
+        "constants": {
+          "description": "4 constants used in rounds",
+          "values": ["0x5a827999", "0x6ed9eba1", "0x8f1bbcdc", "0xca62c1d6"],
+          "detection": "These exact values in code or data"
+        },
+        "round_structure": "80 operations",
+        "state": "5 x 32-bit words (A, B, C, D, E - 160 bits)",
+        "operations": [
+          "Left rotate by 5, 30 bits",
+          "Logical functions (similar to MD5)",
+          "Modular addition"
+        ]
+      },
+      "sha2_signatures": {
+        "sha256_constants": {
+          "description": "64 constants (first 32 bits of cube roots of first 64 primes)",
+          "first_values": ["0x428a2f98", "0x71374491", "0xb5c0fbcf", "0xe9b5dba5"],
+          "detection": "64 x 32-bit constant array"
+        },
+        "sha512_constants": {
+          "description": "80 x 64-bit constants",
+          "detection": "Similar structure but 64-bit values"
+        },
+        "round_structure": {
+          "sha256": "64 rounds",
+          "sha512": "80 rounds"
+        },
+        "operations": [
+          "Ch(x,y,z) = (x AND y) XOR (NOT x AND z)",
+          "Maj(x,y,z) = (x AND y) XOR (x AND z) XOR (y AND z)",
+          "Σ0, Σ1, σ0, σ1 - specific rotation/shift combinations"
+        ]
+      },
+      "korean_hash_signatures": {
+        "has_160": {
+          "description": "Korean hash standard (similar to SHA-1)",
+          "output_size": "160 bits",
+          "state": "5 x 32-bit words",
+          "rounds": "80 operations (4 rounds of 20)",
+          "detection": [
+            "Similar structure to SHA-1",
+            "Different constants and operation order"
+          ]
+        },
+        "lsh": {
+          "description": "Lightweight Secure Hash",
+          "variants": {
+            "lsh_256": "256-bit output",
+            "lsh_512": "512-bit output"
+          },
+          "structure": [
+            "Wide-pipe Merkle-Damgård construction",
+            "ARX-based compression function",
+            "Multiple steps per round"
+          ]
+        }
+      }
+    }
+  },
+
+  "general_detection_patterns": {
+    "cryptographic_library_imports": {
+      "description": "Detecting linked cryptographic libraries",
+      "shared_libraries": [
+        "libcrypto.so / libcrypto.dylib (OpenSSL)",
+        "libssl.so / libssl.dylib",
+        "bcrypt.dll (Windows CNG)",
+        "libgcrypt.so",
+        "libmbedcrypto.so",
+        "libsodium.so"
+      ],
+      "detection_methods": [
+        "Check .dynamic section for DT_NEEDED entries",
+        "Analyze import address table (IAT) on Windows",
+        "Look for .plt (procedure linkage table) entries"
+      ]
+    },
+    "function_symbols": {
+      "description": "If symbols not stripped, function names reveal algorithms",
+      "examples": [
+        "RSA_public_encrypt",
+        "AES_encrypt",
+        "SHA256_Update",
+        "ECDSA_sign",
+        "DH_compute_key"
+      ],
+      "tools": "nm, objdump -t, IDA Pro"
+    },
+    "string_references": {
+      "description": "Algorithm names in error messages or logs",
+      "examples": [
+        "\"RSA key generation failed\"",
+        "\"AES-128-CBC\"",
+        "\"secp256k1\"",
+        "\"SEED encryption\""
+      ],
+      "detection": "strings command, .rodata section analysis"
+    },
+    "characteristic_constants": {
+      "description": "Unique constants reveal algorithms",
+      "examples": {
+        "0x10001": "RSA public exponent 65537",
+        "0x428a2f98": "SHA-256 first K constant",
+        "0x5a827999": "SHA-1 constant",
+        "large_primes": "ECC curve parameters or DH/DSA primes"
+      }
+    },
+    "loop_patterns": {
+      "description": "Cryptographic algorithms have characteristic loop structures",
+      "indicators": {
+        "fixed_iteration_count": [
+          "10 rounds (AES-128)",
+          "16 rounds (DES, SEED)",
+          "32 rounds (HIGHT, LEA-256)",
+          "64 rounds (MD5, SHA-256)"
+        ],
+        "bit_length_iterations": [
+          "1024, 2048, 4096 for RSA",
+          "256, 384, 521 for ECC"
+        ]
+      }
+    },
+    "data_structure_analysis": {
+      "description": "Memory layout reveals cryptographic structures",
+      "examples": {
+        "large_byte_arrays": [
+          "1024+ bit integers (RSA, DH)",
+          "256-byte S-boxes (AES, DES)",
+          "Round key arrays"
+        ],
+        "struct_layouts": [
+          "RSA key struct: modulus, exponent, primes",
+          "ECC key struct: curve params, private scalar, public point"
+        ]
+      }
+    }
+  },
+
+  "platform_specific_patterns": {
+    "x86_64": {
+      "register_usage": [
+        "RAX, RBX, RCX, RDX for arithmetic",
+        "XMM registers for SIMD AES operations",
+        "Carry flag (CF) for multi-precision arithmetic"
+      ],
+      "calling_conventions": {
+        "system_v": "RDI, RSI, RDX, RCX, R8, R9 for arguments",
+        "windows": "RCX, RDX, R8, R9 for arguments"
+      },
+      "special_instructions": [
+        "AESENC, AESDEC (AES-NI)",
+        "PCLMULQDQ (carry-less multiply for GCM)",
+        "RDRAND (hardware random number)"
+      ]
+    },
+    "arm": {
+      "register_usage": [
+        "R0-R12 for general operations",
+        "NEON registers for SIMD",
+        "Carry flag for multi-precision"
+      ],
+      "crypto_extensions": [
+        "AESD, AESE (AES decrypt/encrypt)",
+        "AESIMC, AESMC (AES mix columns)",
+        "SHA1*, SHA256* instructions"
+      ]
+    }
+  },
+
+  "analysis_workflow": {
+    "description": "Step-by-step assembly analysis process",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Identify file type and architecture",
+        "tools": "file, readelf, objdump",
+        "output": "Binary format, CPU architecture, endianness"
+      },
+      {
+        "step": 2,
+        "action": "Extract and analyze symbols",
+        "method": "Check for cryptographic function names",
+        "note": "May be stripped in release builds"
+      },
+      {
+        "step": 3,
+        "action": "Examine linked libraries",
+        "method": "Check for libcrypto, libssl, bcrypt.dll, etc.",
+        "high_confidence": "If crypto library linked, algorithms likely used"
+      },
+      {
+        "step": 4,
+        "action": "Search for characteristic constants",
+        "method": "Scan .data/.rodata for known crypto constants",
+        "examples": "AES S-box, SHA K-tables, ECC curve parameters"
+      },
+      {
+        "step": 5,
+        "action": "Identify loop structures",
+        "method": "Look for fixed iteration loops (10, 16, 32, 64 rounds)",
+        "disassemblers": "IDA Pro, Ghidra, Binary Ninja"
+      },
+      {
+        "step": 6,
+        "action": "Analyze arithmetic patterns",
+        "method": "Detect large integer operations, carry chains, modular reductions",
+        "suggests": "Public-key cryptography (RSA, DH, ECC)"
+      },
+      {
+        "step": 7,
+        "action": "Check for hardware crypto instructions",
+        "method": "Search for AESENC, AESD, SHA1H, etc.",
+        "note": "Direct evidence of specific algorithm use"
+      },
+      {
+        "step": 8,
+        "action": "Correlate findings",
+        "method": "Combine evidence from multiple detection methods",
+        "output": "Confidence-rated list of detected algorithms"
+      }
+    ]
+  },
+
+  "confidence_assessment": {
+    "high_confidence": [
+      "Explicit library function call (e.g., RSA_public_encrypt)",
+      "Hardware crypto instruction use (e.g., AESENC)",
+      "Exact match of characteristic constants (e.g., AES S-box)",
+      "Multiple corroborating indicators"
+    ],
+    "medium_confidence": [
+      "Characteristic loop structure with correct round count",
+      "Large integer arithmetic with typical RSA sizes",
+      "Partial constant matches"
+    ],
+    "low_confidence": [
+      "Generic arithmetic operations only",
+      "Ambiguous loop structures",
+      "Could be non-cryptographic code"
+    ]
+  },
+
+  "common_pitfalls": {
+    "false_positives": [
+      "Checksum algorithms (CRC, Adler32) mistaken for crypto hashes",
+      "Compression algorithms with bit manipulation",
+      "General large integer arithmetic (not crypto-related)",
+      "Random number generation (not necessarily crypto key generation)"
+    ],
+    "false_negatives": [
+      "Heavily optimized or obfuscated code",
+      "Inlined crypto functions with unusual optimizations",
+      "Encrypted or packed binaries",
+      "Custom crypto implementations without standard patterns"
+    ]
+  },
+
+  "tools_and_techniques": {
+    "static_analysis_tools": [
+      "IDA Pro - Industry standard disassembler",
+      "Ghidra - NSA's free reverse engineering tool",
+      "Binary Ninja - Modern disassembler with Python API",
+      "radare2 - Open-source reverse engineering framework",
+      "objdump - Basic disassembly (GNU binutils)"
+    ],
+    "dynamic_analysis": [
+      "strace/ltrace - System/library call tracing",
+      "GDB - GNU debugger for stepping through execution",
+      "Intel PIN - Dynamic binary instrumentation",
+      "Frida - Dynamic instrumentation toolkit"
+    ],
+    "automated_detection": [
+      "YARA rules for binary pattern matching",
+      "Binary diffing to compare with known crypto libraries",
+      "Entropy analysis (high entropy suggests encryption)"
+    ]
+  }
+}

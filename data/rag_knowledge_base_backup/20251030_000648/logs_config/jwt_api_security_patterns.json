@@ -1,0 +1,141 @@
+{
+  "description": "JWT 및 API 인증 보안 패턴 - 양자 취약 알고리즘 탐지",
+  "source": "RFC 7519 (JWT), RFC 7518 (JWA), OAuth 2.0 specifications",
+  "config_patterns": [
+    {
+      "type": "config_pattern",
+      "category": "JWT_RS256_Algorithm",
+      "content": "JWT 알고리즘 RS256: 'alg: RS256'. RSA PKCS#1 v1.5 서명. 2048-bit 이상 RSA 키 사용. 가장 널리 사용되지만 양자 취약. RFC 7518 섹션 3.3.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["RS256", "alg:", "RSA", "PKCS#1"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_RS384_RS512_Algorithm",
+      "content": "JWT 알고리즘 RS384/RS512: 'alg: RS384' 또는 'alg: RS512'. RSA PKCS#1 v1.5 서명 (SHA-384/512). RS256보다 강한 해시지만 여전히 RSA 사용으로 양자 취약.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["RS384", "RS512", "alg:", "RSA"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_ES256_Algorithm",
+      "content": "JWT 알고리즘 ES256: 'alg: ES256'. ECDSA P-256 curve + SHA-256 서명. RSA보다 작은 키 크기지만 ECDSA는 양자 취약. RFC 7518 섹션 3.4.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["ES256", "alg:", "ECDSA", "P-256"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_ES384_ES512_Algorithm",
+      "content": "JWT 알고리즘 ES384/ES512: 'alg: ES384' (P-384 + SHA-384), 'alg: ES512' (P-521 + SHA-512). NIST P-curve ECDSA 서명. 모두 양자 취약.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["ES384", "ES512", "ECDSA", "P-384", "P-521"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_PS256_Algorithm",
+      "content": "JWT 알고리즘 PS256: 'alg: PS256'. RSA PSS (Probabilistic Signature Scheme) + SHA-256. PKCS#1보다 안전하지만 여전히 RSA 기반으로 양자 취약. RFC 7518 섹션 3.5.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["PS256", "alg:", "RSA-PSS", "PSS"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_PS384_PS512_Algorithm",
+      "content": "JWT 알고리즘 PS384/PS512: 'alg: PS384' (SHA-384), 'alg: PS512' (SHA-512). RSA-PSS 서명. 강한 해시지만 RSA 사용으로 양자 취약.",
+      "confidence": 1.0,
+      "source": "RFC_7518_JWA",
+      "keywords": ["PS384", "PS512", "RSA-PSS"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "JWT_Token_Validation_Log",
+      "content": "JWT 검증 로그: 'JWT signature verified using RS256', 'Token validated with algorithm: ES256'. API 서버 로그에서 사용된 알고리즘 기록. 알고리즘 이름으로 양자 취약성 탐지 가능.",
+      "confidence": 0.9,
+      "source": "API_auth_logs",
+      "keywords": ["JWT", "signature verified", "algorithm:", "RS256", "ES256"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "JWT_Header_Log",
+      "content": "JWT 헤더 로그: '{\"alg\":\"RS256\",\"typ\":\"JWT\"}' 또는 'JWT header: alg=ES256'. 디코딩된 JWT 헤더. alg 필드에서 직접 알고리즘 확인 가능.",
+      "confidence": 0.95,
+      "source": "JWT_debug_logs",
+      "keywords": ["alg\":\"RS256", "alg\":\"ES256", "alg=", "JWT header"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "OAuth2_Client_Credentials",
+      "content": "OAuth 2.0 클라이언트 인증: 'client_secret_jwt' 또는 'private_key_jwt' 방식. private_key_jwt는 RSA/ECDSA 키 사용. RFC 7523 JWT Bearer Token. 양자 취약.",
+      "confidence": 0.85,
+      "source": "RFC_7523_OAuth",
+      "keywords": ["client_secret_jwt", "private_key_jwt", "OAuth 2.0"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "API_Certificate_Auth_Log",
+      "content": "API 인증서 인증 로그: 'Client certificate: CN=api-client, O=Company', 'TLS client auth: RSA 2048-bit certificate'. Mutual TLS (mTLS) 인증. 클라이언트 인증서가 RSA/ECDSA면 양자 취약.",
+      "confidence": 0.9,
+      "source": "API_mTLS_logs",
+      "keywords": ["Client certificate", "TLS client auth", "RSA", "mTLS"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "API_Gateway_JWT_Config",
+      "content": "API Gateway JWT 설정: 'jwt_algorithm: RS256', 'jwks_uri: https://.../.well-known/jwks.json'. Kong, AWS API Gateway, Azure APIM 등에서 사용. JWKS에 RSA/ECDSA 공개키 포함 시 양자 취약.",
+      "confidence": 0.85,
+      "source": "API_Gateway_configs",
+      "keywords": ["jwt_algorithm", "jwks_uri", "API Gateway", "RS256"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "JWKS_Endpoint_Log",
+      "content": "JWKS 엔드포인트 로그: 'GET /.well-known/jwks.json', 'keys: [{\"kty\":\"RSA\",\"kid\":\"...\",\"n\":\"...\"}]'. JSON Web Key Set. kty=RSA 또는 kty=EC는 양자 취약 키 타입.",
+      "confidence": 0.9,
+      "source": "JWKS_logs",
+      "keywords": ["jwks.json", "kty\":\"RSA", "kty\":\"EC", "JSON Web Key"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "SAML_RSA_Signature",
+      "content": "SAML 2.0 서명: 'SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\"'. SAML assertion의 XML 서명. RSA-SHA256, RSA-SHA1 등 RSA 기반 서명은 양자 취약.",
+      "confidence": 0.9,
+      "source": "SAML_2.0_spec",
+      "keywords": ["SAML", "SignatureMethod", "rsa-sha256", "xmldsig"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "API_Key_Generation_Log",
+      "content": "API 키 생성 로그: 'Generated RSA key pair for API client', 'Created ECDSA P-256 key for service account'. 서비스 계정이나 API 클라이언트용 키 생성. RSA/ECDSA 생성 시 양자 취약.",
+      "confidence": 0.85,
+      "source": "Key_management_logs",
+      "keywords": ["Generated RSA key", "Created ECDSA key", "API client", "service account"],
+      "severity": "medium"
+    },
+    {
+      "type": "config_pattern",
+      "category": "JWT_None_Algorithm_Vulnerability",
+      "content": "JWT 'none' 알고리즘 취약점: 'alg: none'. 서명 없는 JWT. 양자 취약성과 무관하지만 보안 위험. RFC 7518에서 비권장. 절대 허용 금지.",
+      "confidence": 1.0,
+      "source": "RFC_7518_security",
+      "keywords": ["alg\":\"none", "alg: none", "unsecured JWT"],
+      "severity": "critical"
+    }
+  ]
+}

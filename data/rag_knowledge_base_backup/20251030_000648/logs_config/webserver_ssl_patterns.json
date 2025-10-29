@@ -1,0 +1,141 @@
+{
+  "description": "Apache, Nginx 웹 서버 SSL/TLS 설정 및 로그 패턴",
+  "source": "Apache mod_ssl, Nginx ngx_http_ssl_module documentation",
+  "config_patterns": [
+    {
+      "type": "config_pattern",
+      "category": "Apache_SSLCipherSuite",
+      "content": "Apache SSLCipherSuite 지시자: 'SSLCipherSuite HIGH:!aNULL:!MD5', 'SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256'. httpd.conf 또는 ssl.conf에 설정. ECDHE-RSA, ECDHE-ECDSA 포함 시 양자 취약.",
+      "confidence": 1.0,
+      "source": "Apache_mod_ssl_docs",
+      "keywords": ["SSLCipherSuite", "httpd.conf", "ssl.conf"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Apache_SSLProtocol",
+      "content": "Apache SSLProtocol 지시자: 'SSLProtocol all -SSLv2 -SSLv3', 'SSLProtocol TLSv1.2 TLSv1.3'. 프로토콜 버전 제어. 'all -SSLv2 -SSLv3'는 TLS 1.0+를 의미하며 레거시 cipher suites 허용 가능.",
+      "confidence": 0.95,
+      "source": "Apache_mod_ssl_docs",
+      "keywords": ["SSLProtocol", "SSLv2", "SSLv3", "TLSv1.2"],
+      "severity": "medium"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Apache_SSLHonorCipherOrder",
+      "content": "Apache SSLHonorCipherOrder: 'SSLHonorCipherOrder on'. 서버의 cipher suite 우선순위 사용. 보안 강화. 로그에 'prefer server ciphers' 기록 가능.",
+      "confidence": 0.9,
+      "source": "Apache_mod_ssl_docs",
+      "keywords": ["SSLHonorCipherOrder", "prefer server"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Apache_SSL_Info_Log",
+      "content": "Apache SSL 정보 로그: '[ssl:info] [pid 1234] SSL Cipher Suite: ECDHE-RSA-AES256-GCM-SHA384', '[ssl:info] SSL Protocol: TLSv1.2'. LogLevel을 info 이상으로 설정 시 기록. Cipher suite와 protocol 버전 탐지 가능.",
+      "confidence": 0.95,
+      "source": "Apache_ssl_logs",
+      "keywords": ["[ssl:info]", "SSL Cipher Suite:", "SSL Protocol:"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Apache_SSL_Error_Log",
+      "content": "Apache SSL 오류 로그: '[ssl:error] SSL Library Error: error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure', '[ssl:warn] SSL: weak cipher'. SSL handshake 실패나 약한 cipher 경고.",
+      "confidence": 0.9,
+      "source": "Apache_ssl_logs",
+      "keywords": ["[ssl:error]", "[ssl:warn]", "handshake failure", "weak cipher"],
+      "severity": "warning"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Apache_SSL_Access_Log",
+      "content": "Apache access log의 SSL 변수: '%{SSL_PROTOCOL}x %{SSL_CIPHER}x' 형식으로 기록 가능. 예: 'TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384'. CustomLog 지시자에서 설정.",
+      "confidence": 0.85,
+      "source": "Apache_access_logs",
+      "keywords": ["SSL_PROTOCOL", "SSL_CIPHER", "CustomLog"],
+      "severity": "info"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Nginx_ssl_ciphers",
+      "content": "Nginx ssl_ciphers 지시자: 'ssl_ciphers HIGH:!aNULL:!MD5;', 'ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;'. nginx.conf에 설정. ECDHE-RSA, ECDHE-ECDSA 포함 시 양자 취약.",
+      "confidence": 1.0,
+      "source": "Nginx_ngx_http_ssl_module",
+      "keywords": ["ssl_ciphers", "nginx.conf"],
+      "severity": "high"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Nginx_ssl_protocols",
+      "content": "Nginx ssl_protocols 지시자: 'ssl_protocols TLSv1.2 TLSv1.3;', 'ssl_protocols TLSv1 TLSv1.1 TLSv1.2;'. 지원할 TLS 버전 명시. TLSv1, TLSv1.1은 취약하므로 비활성화 권장.",
+      "confidence": 0.95,
+      "source": "Nginx_ngx_http_ssl_module",
+      "keywords": ["ssl_protocols", "TLSv1.2", "TLSv1.3"],
+      "severity": "medium"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Nginx_ssl_prefer_server_ciphers",
+      "content": "Nginx ssl_prefer_server_ciphers: 'ssl_prefer_server_ciphers on;'. 서버의 cipher suite 우선순위 사용. TLS 1.3에서는 무시됨 (클라이언트 선택).",
+      "confidence": 0.9,
+      "source": "Nginx_ngx_http_ssl_module",
+      "keywords": ["ssl_prefer_server_ciphers", "on"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Nginx_SSL_Log",
+      "content": "Nginx SSL 로그: '2024/01/01 12:00:00 [info] SSL: TLSv1.2, cipher: \"ECDHE-RSA-AES128-GCM-SHA256\"'. error_log의 info 레벨에서 기록. 프로토콜과 cipher suite 탐지 가능.",
+      "confidence": 0.95,
+      "source": "Nginx_ssl_logs",
+      "keywords": ["[info]", "SSL:", "TLSv1", "cipher:"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Nginx_Access_Log_SSL",
+      "content": "Nginx access log의 SSL 변수: '$ssl_protocol $ssl_cipher' 형식. 예: 'TLSv1.3 TLS_AES_256_GCM_SHA384'. log_format 지시자에서 정의.",
+      "confidence": 0.85,
+      "source": "Nginx_access_logs",
+      "keywords": ["$ssl_protocol", "$ssl_cipher", "log_format"],
+      "severity": "info"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Nginx_SSL_Handshake_Error",
+      "content": "Nginx SSL handshake 오류: '2024/01/01 12:00:00 [crit] SSL_do_handshake() failed', '[error] peer closed connection in SSL handshake'. Handshake 실패 로그.",
+      "confidence": 0.9,
+      "source": "Nginx_error_logs",
+      "keywords": ["SSL_do_handshake", "failed", "peer closed connection"],
+      "severity": "error"
+    },
+    {
+      "type": "config_pattern",
+      "category": "HAProxy_SSL_Config",
+      "content": "HAProxy SSL 설정: 'bind *:443 ssl crt /path/to/cert.pem ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256'. haproxy.cfg에서 ciphers 옵션으로 cipher suite 지정. ECDHE-RSA, ECDHE-ECDSA는 양자 취약.",
+      "confidence": 0.9,
+      "source": "HAProxy_docs",
+      "keywords": ["bind", "ssl", "crt", "ciphers"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "HAProxy_SSL_Log",
+      "content": "HAProxy SSL 로그: '[WARNING] SSL handshake failure', 'SSL: cipher used: ECDHE-RSA-AES256-GCM-SHA384'. syslog나 stdout으로 기록. Cipher suite와 handshake 상태 탐지 가능.",
+      "confidence": 0.85,
+      "source": "HAProxy_logs",
+      "keywords": ["SSL handshake", "cipher used", "SSL:"],
+      "severity": "info"
+    },
+    {
+      "type": "config_pattern",
+      "category": "Caddy_TLS_Config",
+      "content": "Caddy 웹 서버 TLS 설정: 'tls { ciphers TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 }'. Caddyfile에서 cipher suites 명시. 기본적으로 안전한 설정 사용.",
+      "confidence": 0.8,
+      "source": "Caddy_docs",
+      "keywords": ["tls {", "ciphers", "Caddyfile"],
+      "severity": "medium"
+    }
+  ]
+}

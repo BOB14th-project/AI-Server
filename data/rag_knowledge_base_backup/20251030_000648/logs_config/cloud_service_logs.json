@@ -1,0 +1,141 @@
+{
+  "description": "클라우드 서비스 암호화 로그 패턴 - AWS KMS, Azure Key Vault, GCP Cloud KMS",
+  "source": "AWS CloudTrail, Azure Diagnostic Logs, GCP Cloud Audit Logs",
+  "config_patterns": [
+    {
+      "type": "log_pattern",
+      "category": "AWS_KMS_CreateKey_RSA",
+      "content": "AWS KMS CreateKey 로그: CloudTrail 'eventName: CreateKey', 'requestParameters.keySpec: RSA_2048/RSA_3072/RSA_4096'. RSA 키 생성. 모든 RSA 키는 양자 취약. keyUsage: SIGN_VERIFY, ENCRYPT_DECRYPT.",
+      "confidence": 1.0,
+      "source": "AWS_CloudTrail",
+      "keywords": ["CreateKey", "keySpec", "RSA_2048", "RSA_3072", "RSA_4096", "CloudTrail"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "AWS_KMS_CreateKey_ECC",
+      "content": "AWS KMS CreateKey 로그: 'keySpec: ECC_NIST_P256/ECC_NIST_P384/ECC_NIST_P521'. NIST P-curve ECDSA 키 생성. 모두 양자 취약. keyUsage: SIGN_VERIFY 전용.",
+      "confidence": 1.0,
+      "source": "AWS_CloudTrail",
+      "keywords": ["CreateKey", "ECC_NIST_P256", "ECC_NIST_P384", "ECC_NIST_P521"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "AWS_KMS_GenerateDataKey",
+      "content": "AWS KMS GenerateDataKey 로그: 'eventName: GenerateDataKey', 'requestParameters.keyId: arn:aws:kms:...'. 데이터 암호화 키 생성. KMS 마스터 키가 RSA/ECC면 키 래핑(wrapping)이 양자 취약.",
+      "confidence": 0.85,
+      "source": "AWS_CloudTrail",
+      "keywords": ["GenerateDataKey", "keyId", "arn:aws:kms"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "AWS_KMS_Sign_Verify",
+      "content": "AWS KMS Sign/Verify 로그: 'eventName: Sign', 'requestParameters.signingAlgorithm: RSASSA_PSS_SHA_256/ECDSA_SHA_256'. RSA-PSS, ECDSA 서명. 양자 취약 알고리즘 사용.",
+      "confidence": 0.95,
+      "source": "AWS_CloudTrail",
+      "keywords": ["Sign", "Verify", "signingAlgorithm", "RSASSA_PSS", "ECDSA"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Azure_KeyVault_CreateKey_RSA",
+      "content": "Azure Key Vault CreateKey 로그: 'operationName: KeyCreate', 'properties.keyType: RSA', 'properties.keySize: 2048/3072/4096'. RSA 키 생성. Azure 진단 로그에 기록. 양자 취약.",
+      "confidence": 1.0,
+      "source": "Azure_Diagnostic_Logs",
+      "keywords": ["KeyCreate", "keyType", "RSA", "keySize", "2048", "3072", "4096"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Azure_KeyVault_CreateKey_EC",
+      "content": "Azure Key Vault CreateKey 로그: 'keyType: EC', 'properties.curveName: P-256/P-384/P-521'. NIST P-curve ECDSA 키. secp256k1도 지원하지만 모두 양자 취약.",
+      "confidence": 1.0,
+      "source": "Azure_Diagnostic_Logs",
+      "keywords": ["KeyCreate", "keyType", "EC", "curveName", "P-256", "P-384", "P-521"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Azure_KeyVault_Sign_Operation",
+      "content": "Azure Key Vault Sign 로그: 'operationName: Sign', 'properties.algorithm: RS256/RS384/RS512 또는 ES256/ES384/ES512'. RSA 또는 ECDSA 서명 작업. 양자 취약.",
+      "confidence": 0.95,
+      "source": "Azure_Diagnostic_Logs",
+      "keywords": ["Sign", "algorithm", "RS256", "RS384", "ES256", "ES384"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Azure_KeyVault_Certificate",
+      "content": "Azure Key Vault 인증서: 'operationName: CertificateCreate', 'properties.keyType: RSA/EC'. TLS 인증서 생성. 인증서의 공개키가 RSA/ECDSA면 양자 취약.",
+      "confidence": 0.9,
+      "source": "Azure_Diagnostic_Logs",
+      "keywords": ["CertificateCreate", "keyType", "certificate"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "GCP_KMS_CreateCryptoKey_RSA",
+      "content": "GCP Cloud KMS CreateCryptoKey 로그: 'protoPayload.methodName: CreateCryptoKey', 'cryptoKeyVersion.algorithm: RSA_SIGN_PSS_2048_SHA256/RSA_DECRYPT_OAEP_2048_SHA256'. RSA 키 생성. 양자 취약.",
+      "confidence": 1.0,
+      "source": "GCP_Cloud_Audit_Logs",
+      "keywords": ["CreateCryptoKey", "algorithm", "RSA_SIGN_PSS", "RSA_DECRYPT_OAEP"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "GCP_KMS_CreateCryptoKey_EC",
+      "content": "GCP Cloud KMS CreateCryptoKey 로그: 'algorithm: EC_SIGN_P256_SHA256/EC_SIGN_P384_SHA384/EC_SIGN_SECP256K1_SHA256'. ECDSA 서명 키. P-256, P-384, secp256k1 모두 양자 취약.",
+      "confidence": 1.0,
+      "source": "GCP_Cloud_Audit_Logs",
+      "keywords": ["CreateCryptoKey", "EC_SIGN_P256", "EC_SIGN_P384", "EC_SIGN_SECP256K1"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "GCP_KMS_AsymmetricSign",
+      "content": "GCP Cloud KMS AsymmetricSign 로그: 'protoPayload.methodName: AsymmetricSign', 'request.name: projects/.../cryptoKeys/.../cryptoKeyVersions/1'. RSA/ECDSA 비대칭 서명. 키 알고리즘에 따라 양자 취약.",
+      "confidence": 0.9,
+      "source": "GCP_Cloud_Audit_Logs",
+      "keywords": ["AsymmetricSign", "cryptoKeys", "cryptoKeyVersions"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "AWS_Certificate_Manager",
+      "content": "AWS Certificate Manager (ACM) 로그: 'eventName: RequestCertificate', 'requestParameters.keyAlgorithm: RSA_2048/RSA_4096 또는 EC_prime256v1/EC_secp384r1'. TLS 인증서 요청. 양자 취약 알고리즘.",
+      "confidence": 0.9,
+      "source": "AWS_CloudTrail_ACM",
+      "keywords": ["RequestCertificate", "keyAlgorithm", "RSA_2048", "EC_prime256v1"],
+      "severity": "high"
+    },
+    {
+      "type": "log_pattern",
+      "category": "Azure_App_Service_TLS",
+      "content": "Azure App Service TLS 로그: 'TLS handshake completed', 'cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'. App Service 진단 로그. ECDHE-RSA cipher suite 사용 시 양자 취약.",
+      "confidence": 0.85,
+      "source": "Azure_App_Service_Logs",
+      "keywords": ["TLS handshake", "cipher", "ECDHE_RSA", "App Service"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "GCP_Load_Balancer_SSL",
+      "content": "GCP Load Balancer SSL 로그: 'jsonPayload.sslCipher: ECDHE-RSA-AES128-GCM-SHA256', 'sslProtocol: TLSv1.2'. Cloud Load Balancing 로그. ECDHE-RSA cipher 사용 시 양자 취약.",
+      "confidence": 0.85,
+      "source": "GCP_Load_Balancer_Logs",
+      "keywords": ["sslCipher", "ECDHE-RSA", "sslProtocol", "Load Balancer"],
+      "severity": "medium"
+    },
+    {
+      "type": "log_pattern",
+      "category": "AWS_ELB_SSL_Negotiation",
+      "content": "AWS ELB SSL Negotiation 로그: 'ssl_cipher: ECDHE-RSA-AES128-GCM-SHA256', 'ssl_protocol: TLSv1.2'. Elastic Load Balancer 액세스 로그. ECDHE-RSA cipher 사용 시 양자 취약.",
+      "confidence": 0.85,
+      "source": "AWS_ELB_Access_Logs",
+      "keywords": ["ssl_cipher", "ECDHE-RSA", "ssl_protocol", "ELB"],
+      "severity": "medium"
+    }
+  ]
+}
