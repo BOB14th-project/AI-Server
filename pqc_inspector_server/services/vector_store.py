@@ -21,7 +21,10 @@ class VectorStore:
         # ChromaDB 클라이언트 초기화
         self.client = chromadb.PersistentClient(
             path=persist_directory,
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(
+                anonymized_telemetry=False,
+                allow_reset=True
+            )
         )
 
         # 컬렉션 생성 또는 가져오기
