@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 8000
 
     # --- 외부 API 설정 ---
-    EXTERNAL_API_BASE_URL: str = "https://jsonplaceholder.typicode.com"  # 테스트용 API
-    EXTERNAL_API_KEY: str = "test-api-key"
+    EXTERNAL_API_BASE_URL: str = "https://harper-abler-agape.ngrok-free.dev"  # 실제 DB API
+    EXTERNAL_API_KEY: str = ""  # API 키가 필요 없음
     EXTERNAL_API_TIMEOUT: int = 30
 
     # --- 애플리케이션 설정 ---

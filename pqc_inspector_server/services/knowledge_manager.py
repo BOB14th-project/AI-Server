@@ -230,8 +230,113 @@ class KnowledgeManager:
                         "source": f"{source_type}_{file_stem}_indicators"
                     })
 
-        # 3. 단일 객체인 경우 (fallback)
-        if not items and 'detailed_structure' not in data and isinstance(data, dict):
+        # 3. Korean Crypto RAG Reference 형식 (복잡한 계층 구조)
+        if 'metadata' in data and 'block_cipher_patterns' in data:
+            # 블록 암호 패턴
+            for cipher_key, cipher_data in data.get('block_cipher_patterns', {}).items():
+                if not isinstance(cipher_data, dict):
+                    continue
+
+                actual_standard = cipher_data.get('actual_standard', cipher_key)
+
+                # 기술적 특성
+                if 'technical_characteristics' in cipher_data:
+                    tech_chars = cipher_data['technical_characteristics']
+                    content = f"{actual_standard}: " + ", ".join([f"{k}={v}" for k, v in tech_chars.items() if k != 'year_developed'])
+                    knowledge_items.append({
+                        "type": "korean_crypto",
+                        "category": actual_standard,
+                        "content": content,
+                        "confidence": 0.95,
+                        "source": f"{source_type}_{file_stem}_tech"
+                    })
+
+                # 코드 인디케이터
+                if 'code_indicators' in cipher_data:
+                    code_ind = cipher_data['code_indicators']
+                    content = f"{actual_standard} code indicators: "
+                    for key, value in code_ind.items():
+                        if isinstance(value, list):
+                            content += f"{key}: {', '.join(map(str, value[:3]))}; "
+                    knowledge_items.append({
+                        "type": "korean_crypto_indicator",
+                        "category": f"{actual_standard}_detection",
+                        "content": content,
+                        "confidence": 0.9,
+                        "source": f"{source_type}_{file_stem}_indicators"
+                    })
+
+            # 해시 함수 패턴
+            for hash_key, hash_data in data.get('hash_function_patterns', {}).items():
+                if not isinstance(hash_data, dict):
+                    continue
+
+                actual_standard = hash_data.get('actual_standard', hash_key)
+
+                # 기술적 특성
+                if 'technical_characteristics' in hash_data:
+                    tech_chars = hash_data['technical_characteristics']
+                    content = f"{actual_standard}: " + ", ".join([f"{k}={v}" for k, v in tech_chars.items()])
+                    knowledge_items.append({
+                        "type": "korean_hash",
+                        "category": actual_standard,
+                        "content": content,
+                        "confidence": 0.95,
+                        "source": f"{source_type}_{file_stem}_hash"
+                    })
+
+                # 코드 인디케이터
+                if 'code_indicators' in hash_data:
+                    code_ind = hash_data['code_indicators']
+                    content = f"{actual_standard} code indicators: "
+                    for key, value in code_ind.items():
+                        if isinstance(value, list):
+                            content += f"{key}: {', '.join(map(str, value[:3]))}; "
+                    knowledge_items.append({
+                        "type": "korean_hash_indicator",
+                        "category": f"{actual_standard}_detection",
+                        "content": content,
+                        "confidence": 0.9,
+                        "source": f"{source_type}_{file_stem}_hash_indicators"
+                    })
+
+            # 서명 알고리즘 패턴
+            for sig_key, sig_data in data.get('signature_algorithm_patterns', {}).items():
+                if not isinstance(sig_data, dict):
+                    continue
+
+                actual_standard = sig_data.get('actual_standard', sig_key)
+
+                # 기술적 특성
+                if 'technical_characteristics' in sig_data:
+                    tech_chars = sig_data['technical_characteristics']
+                    content = f"{actual_standard}: " + ", ".join([f"{k}={v}" for k, v in tech_chars.items()])
+                    knowledge_items.append({
+                        "type": "korean_signature",
+                        "category": actual_standard,
+                        "content": content,
+                        "confidence": 0.95,
+                        "source": f"{source_type}_{file_stem}_sig"
+                    })
+
+            # Structural fingerprints
+            if 'implementation_detection_guide' in data:
+                detection_guide = data['implementation_detection_guide']
+
+                if 'structural_fingerprints' in detection_guide:
+                    for algo, fingerprints in detection_guide['structural_fingerprints'].items():
+                        if isinstance(fingerprints, list):
+                            content = f"{algo} structural fingerprints: " + ", ".join(fingerprints[:5])
+                            knowledge_items.append({
+                                "type": "korean_fingerprint",
+                                "category": f"{algo}_fingerprint",
+                                "content": content,
+                                "confidence": 0.95,
+                                "source": f"{source_type}_{file_stem}_fingerprints"
+                            })
+
+        # 4. 단일 객체인 경우 (fallback)
+        if not items and 'detailed_structure' not in data and 'metadata' not in data and isinstance(data, dict):
             # algorithm 필드가 있으면 알고리즘 설명으로 처리
             if 'algorithm' in data:
                 algorithm = data.get('algorithm', 'unknown')

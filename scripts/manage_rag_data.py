@@ -24,42 +24,70 @@ class RAGDataManager:
         self.agent_types = ["source_code", "assembly_binary", "logs_config"]
 
     async def load_json_files(self, agent_type: str) -> List[Dict[str, Any]]:
-        """지정된 에이전트 타입의 모든 JSON 파일을 로드합니다."""
-        agent_path = self.knowledge_base_path / agent_type
-
-        if not agent_path.exists():
-            print(f"⚠️ 경로가 존재하지 않습니다: {agent_path}")
-            return []
-
+        """지정된 에이전트 타입의 모든 JSON 파일을 로드합니다 (common 폴더 포함)."""
         all_data = []
 
-        for json_file in agent_path.glob("*.json"):
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+        # 1. common 폴더의 JSON 파일 로드 (모든 에이전트 공통)
+        common_path = self.knowledge_base_path / "common"
+        if common_path.exists():
+            print(f"📂 Common 폴더 로드 중...")
+            for json_file in common_path.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
 
-                # 데이터 구조에 따라 처리
-                if 'patterns' in data:
-                    all_data.extend(data['patterns'])
-                elif 'signatures' in data:
-                    all_data.extend(data['signatures'])
-                elif 'config_patterns' in data:
-                    all_data.extend(data['config_patterns'])
-                elif 'log_patterns' in data:
-                    all_data.extend(data['log_patterns'])
-                else:
-                    # 직접 배열인 경우
-                    if isinstance(data, list):
-                        all_data.extend(data)
-                    else:
-                        all_data.append(data)
+                    # 데이터 구조에 따라 처리
+                    processed_data = self._process_json_data(data)
+                    all_data.extend(processed_data)
 
-                print(f"✅ 로드됨: {json_file.name}")
+                    print(f"✅ [Common] 로드됨: {json_file.name}")
 
-            except Exception as e:
-                print(f"❌ {json_file.name} 로드 실패: {e}")
+                except Exception as e:
+                    print(f"❌ [Common] {json_file.name} 로드 실패: {e}")
+
+        # 2. 에이전트 타입별 폴더의 JSON 파일 로드
+        agent_path = self.knowledge_base_path / agent_type
+        if agent_path.exists():
+            print(f"📂 {agent_type} 폴더 로드 중...")
+            for json_file in agent_path.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+
+                    # 데이터 구조에 따라 처리
+                    processed_data = self._process_json_data(data)
+                    all_data.extend(processed_data)
+
+                    print(f"✅ [{agent_type}] 로드됨: {json_file.name}")
+
+                except Exception as e:
+                    print(f"❌ [{agent_type}] {json_file.name} 로드 실패: {e}")
+        else:
+            print(f"⚠️ 경로가 존재하지 않습니다: {agent_path}")
 
         return all_data
+
+    def _process_json_data(self, data: Any) -> List[Dict[str, Any]]:
+        """JSON 데이터 구조를 처리하여 리스트로 변환합니다."""
+        processed = []
+
+        # 데이터 구조에 따라 처리
+        if 'patterns' in data:
+            processed.extend(data['patterns'])
+        elif 'signatures' in data:
+            processed.extend(data['signatures'])
+        elif 'config_patterns' in data:
+            processed.extend(data['config_patterns'])
+        elif 'log_patterns' in data:
+            processed.extend(data['log_patterns'])
+        else:
+            # 직접 배열인 경우
+            if isinstance(data, list):
+                processed.extend(data)
+            else:
+                processed.append(data)
+
+        return processed
 
     async def refresh_knowledge_base(self, agent_type: str = None):
         """지식 베이스를 새로고침합니다."""

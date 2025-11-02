@@ -54,6 +54,38 @@ async def get_analysis_report(
     return result
 
 
+@api_router.post("/analyze/db")
+async def analyze_from_database(
+    file_id: int,
+    scan_id: int,
+    orchestrator: OrchestratorController = Depends(get_orchestrator_controller)
+):
+    """
+    DB에서 파일 데이터를 가져와 종합 분석을 수행하고 결과를 DB에 저장합니다.
+
+    Parameters:
+    - file_id: 분석할 파일의 ID
+    - scan_id: 스캔 세션 ID
+
+    Returns:
+    - 분석 성공 여부 및 결과
+    """
+    result = await orchestrator.analyze_from_db(file_id, scan_id)
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "분석 실패")
+        )
+
+    return {
+        "message": "분석이 성공적으로 완료되었습니다.",
+        "file_id": file_id,
+        "scan_id": scan_id,
+        "analysis_preview": result.get("analysis", "")[:200] + "..."
+    }
+
+
 # --- 에이전트별 직접 분석 엔드포인트 (벤치마크용) ---
 from .schemas import AgentAnalysisResult
 from ..agents.source_code import SourceCodeAgent

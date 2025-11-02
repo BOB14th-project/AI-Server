@@ -1,0 +1,458 @@
+{
+  "metadata": {
+    "title": "Korean Cryptographic Standards Reference Guide",
+    "purpose": "Technical reference for identifying cryptographic implementations in Korean systems",
+    "version": "1.0",
+    "last_updated": "2025",
+    "note": "This document provides technical characteristics and implementation patterns without revealing specific algorithm names in obvious ways"
+  },
+
+  "korean_standards_overview": {
+    "description": "Republic of Korea has developed several national cryptographic standards approved by Korean Cryptographic Module Validation Program (KCMVP)",
+    "regulatory_bodies": [
+      "National Intelligence Service (NIS)",
+      "Korea Internet & Security Agency (KISA)",
+      "Telecommunications Technology Association (TTA)"
+    ],
+    "common_usage_sectors": [
+      "Government communications",
+      "Banking and financial services",
+      "Mobile payment systems",
+      "IoT device security",
+      "Blockchain and cryptocurrency",
+      "VPN and secure tunneling"
+    ]
+  },
+
+  "block_cipher_patterns": {
+    "128bit_feistel_banking_standard": {
+      "technical_characteristics": {
+        "structure": "Feistel network with 16 rounds",
+        "block_size": "128 bits",
+        "key_sizes": ["128 bits", "192 bits", "256 bits"],
+        "sbox_count": 4,
+        "sbox_names_pattern": ["SS0", "SS1", "SS2", "SS3"],
+        "notable_constants": ["0x9e3779b9", "0x3c6ef373", "0x78dde6e6", "0xf1bbcdcc"],
+        "year_developed": "1998-1999"
+      },
+      "code_indicators": {
+        "class_names": ["BankingCipher", "KoreanBankingCipher", "DomesticBlockCipher"],
+        "function_names": ["f_function", "banking_f_function", "generate_banking_round_keys"],
+        "variable_patterns": ["banking_ss0", "banking_ss1", "kc", "round_constants"],
+        "comment_keywords": ["Korean banking", "domestic standard", "16 rounds", "Feistel"]
+      },
+      "typical_implementation_hints": {
+        "round_structure": "Classic Feistel: L_i+1 = R_i, R_i+1 = L_i XOR F(R_i, K_i)",
+        "key_schedule": "Rotating key words with round constants",
+        "block_processing": "64-bit or 128-bit blocks depending on variant"
+      },
+      "common_misidentifications": "Often confused with international standards due to Feistel structure",
+      "actual_standard": "SEED (Korean domestic block cipher standard)"
+    },
+
+    "involution_ssp_korean_standard": {
+      "technical_characteristics": {
+        "structure": "Involutional Substitution-Permutation Network (SPN)",
+        "block_size": "128 bits",
+        "key_sizes": ["128 bits", "192 bits", "256 bits"],
+        "rounds": "12, 14, or 16 depending on key size",
+        "sbox_types": ["S-box Type 1", "S-box Type 2"],
+        "layer_count": "3 transformation layers per round"
+      },
+      "code_indicators": {
+        "class_names": ["KoreanBlockProcessor", "InvolutionalCipher", "SPNProcessor"],
+        "function_names": ["_apply_substitution_layer_1", "_apply_substitution_layer_2", "_diffusion_layer"],
+        "variable_patterns": ["s1_table", "s2_table", "round_constants"],
+        "distinctive_features": ["Dual substitution layers", "Involutional design", "12/14/16 rounds"]
+      },
+      "typical_implementation_hints": {
+        "round_structure": "Substitution Layer 1 → Substitution Layer 2 → Diffusion → Key Addition",
+        "key_schedule": "Round constant based expansion with substitution",
+        "notable_property": "Encryption and decryption use same structure (involution)"
+      },
+      "common_usage": "Government communications, secure document systems",
+      "actual_standard": "ARIA (Korean encryption standard - Academy Research Institute Agency)"
+    },
+
+    "lightweight_64bit_iot_cipher": {
+      "technical_characteristics": {
+        "structure": "Generalized Feistel Network",
+        "block_size": "64 bits (8 bytes)",
+        "key_sizes": ["128 bits"],
+        "rounds": "32 rounds",
+        "target_devices": "Low-power IoT devices, RFID tags, sensors"
+      },
+      "code_indicators": {
+        "class_names": ["LightweightCipher", "IoTBlockCipher", "SensorEncryption"],
+        "function_names": ["lightweight_round", "iot_encrypt", "whitening_key_addition"],
+        "variable_patterns": ["delta", "round_keys[32]"],
+        "distinctive_features": ["Very simple operations", "Optimized for 8-bit processors", "Minimal memory footprint"]
+      },
+      "typical_implementation_hints": {
+        "round_structure": "Simple XOR, rotation, and addition operations",
+        "key_schedule": "Linear feedback shift register (LFSR) based",
+        "optimization": "Designed for hardware efficiency, low gate count"
+      },
+      "common_usage": "Korean IoT devices, smart home systems, industrial sensors",
+      "actual_standard": "HIGHT (HIGh security and light weigHT)"
+    },
+
+    "128bit_arf_fast_cipher": {
+      "technical_characteristics": {
+        "structure": "ARX (Add-Rotate-XOR) based cipher",
+        "block_size": "128 bits",
+        "key_sizes": ["128 bits", "192 bits", "256 bits"],
+        "rounds": "24, 28, or 32 rounds",
+        "design_goal": "High speed software implementation"
+      },
+      "code_indicators": {
+        "class_names": ["FastBlockCipher", "ARXCipher", "SoftwareOptimizedCipher"],
+        "function_names": ["arf_round", "fast_encrypt_block", "optimized_key_schedule"],
+        "variable_patterns": ["round_delta", "rotation_constants"],
+        "distinctive_features": ["No S-boxes", "Only add/rotate/xor operations", "Very fast in software"]
+      },
+      "typical_implementation_hints": {
+        "round_structure": "Addition → Rotation → XOR pattern repeated",
+        "key_schedule": "Delta-based round key generation",
+        "performance": "Optimized for 32-bit and 64-bit processors"
+      },
+      "common_usage": "Mobile payment applications, high-throughput data encryption",
+      "actual_standard": "LEA (Lightweight Encryption Algorithm)"
+    }
+  },
+
+  "hash_function_patterns": {
+    "korean_domestic_hash_160": {
+      "technical_characteristics": {
+        "output_size": "160 bits (20 bytes)",
+        "structure": "Modified MD5/SHA-1 inspired design",
+        "compression_function": "Custom designed for Korean standards",
+        "message_schedule": "Expanded from 16 to 80 words"
+      },
+      "code_indicators": {
+        "class_names": ["KoreanHash", "DomesticHashFunction", "Hash160"],
+        "function_names": ["compress_block", "message_schedule_160", "domestic_hash_finalize"],
+        "variable_patterns": ["iv_constants", "step_constants", "h0_h4"],
+        "distinctive_features": ["160-bit output", "80 rounds", "5 chaining variables"]
+      },
+      "typical_implementation_hints": {
+        "initialization": "Five 32-bit initialization vectors",
+        "round_structure": "80 steps with different functions per round group",
+        "padding": "MD-compliant padding with length encoding"
+      },
+      "common_usage": "Digital signatures in Korean PKI, document integrity",
+      "actual_standard": "HAS-160 (Hash Algorithm Standard 160-bit)"
+    },
+
+    "korean_modern_hash_family": {
+      "technical_characteristics": {
+        "output_sizes": ["224 bits", "256 bits", "384 bits", "512 bits"],
+        "structure": "Wide-pipe Merkle-Damgård with novel message expansion",
+        "compression_function": "Unique to Korean design",
+        "design_year": "2014-2015"
+      },
+      "code_indicators": {
+        "class_names": ["ModernKoreanHash", "NewHashStandard", "LSHHash"],
+        "function_names": ["mix_function", "step_function", "msg_expansion"],
+        "variable_patterns": ["cv", "msg_blk", "step_constants"],
+        "distinctive_features": ["Wide internal state", "Novel message mixing", "Multiple output sizes"]
+      },
+      "typical_implementation_hints": {
+        "round_structure": "Step-based compression with mixing functions",
+        "message_expansion": "Proprietary expansion different from SHA-2/3",
+        "finalization": "Truncation from internal state to output"
+      },
+      "common_usage": "Modern Korean government systems, blockchain applications",
+      "actual_standard": "LSH (Lightweight Secure Hash) - note the naming is counterintuitive"
+    }
+  },
+
+  "signature_algorithm_patterns": {
+    "korean_dsa_variant": {
+      "technical_characteristics": {
+        "base_algorithm": "Similar to DSA but with Korean-specific parameters",
+        "key_components": "Uses Korean hash function (HAS-160) typically",
+        "parameter_sizes": "1024-bit to 2048-bit modulus"
+      },
+      "code_indicators": {
+        "class_names": ["KoreanSignature", "DomesticDSA", "KoreanDSAVariant"],
+        "function_names": ["sign_korean", "verify_korean", "generate_k_korean"],
+        "variable_patterns": ["p", "q", "g", "x", "y", "r", "s"],
+        "distinctive_features": ["Paired with HAS-160", "Korean domain parameters", "NIS/KISA approved"]
+      },
+      "typical_implementation_hints": {
+        "signature_generation": "r = (g^k mod p) mod q, s = k^-1(H(m) + xr) mod q",
+        "hash_function": "Typically uses HAS-160 for H(m)",
+        "nonce_generation": "Requires cryptographically secure random k"
+      },
+      "common_usage": "Korean government PKI, certificate authorities, document signing",
+      "actual_standard": "KCDSA (Korean Certificate-based Digital Signature Algorithm)"
+    },
+
+    "korean_ecdsa_variant": {
+      "technical_characteristics": {
+        "base_algorithm": "Elliptic curve variant of KCDSA",
+        "curve_types": "Uses standardized Korean elliptic curves",
+        "hash_function": "Typically HAS-160 or LSH"
+      },
+      "code_indicators": {
+        "class_names": ["KoreanECSignature", "ECKoreanDSA", "EllipticCurveKorean"],
+        "function_names": ["ec_sign_korean", "ec_verify_korean", "point_multiply_korean"],
+        "variable_patterns": ["curve_params", "base_point", "private_key", "public_point"],
+        "distinctive_features": ["EC variant of KCDSA", "Korean standardized curves", "Certificate-based"]
+      },
+      "typical_implementation_hints": {
+        "signature_generation": "EC point multiplication with Korean parameters",
+        "verification": "Uses elliptic curve operations over Korean-approved curves",
+        "certificate_integration": "Designed for certificate-based authentication"
+      },
+      "common_usage": "Korean mobile authentication, blockchain wallets, PKI systems",
+      "actual_standard": "EC-KCDSA (Elliptic Curve KCDSA)"
+    }
+  },
+
+  "implementation_detection_guide": {
+    "naming_conventions": {
+      "korean_language_hints": [
+        "Variables/comments mentioning 'Korean', '한국', 'domestic', 'KS', 'TTAS'",
+        "References to KISA, NIS, TTA in comments",
+        "Banking terms: 'banking', 'financial', 'payment'",
+        "Government terms: 'government', 'public sector', 'official'"
+      ],
+      "standard_prefixes": [
+        "korean_", "domestic_", "ks_", "ttas_", "kisa_"
+      ],
+      "obfuscated_names": [
+        "KoreanBlockProcessor → ARIA",
+        "KoreanBankingCipher → SEED",
+        "LightweightCipher → HIGHT",
+        "FastBlockCipher → LEA",
+        "KoreanHash → HAS-160",
+        "ModernKoreanHash → LSH",
+        "KoreanSignature → KCDSA",
+        "ECKoreanSignature → EC-KCDSA"
+      ]
+    },
+
+    "structural_fingerprints": {
+      "SEED_fingerprints": [
+        "16 rounds",
+        "Feistel structure",
+        "4 S-boxes (SS0, SS1, SS2, SS3)",
+        "128-bit blocks",
+        "Constants: 0x9e3779b9",
+        "F-function with S-box lookups"
+      ],
+      "ARIA_fingerprints": [
+        "12/14/16 rounds based on key size",
+        "Involution property",
+        "Two different S-box layers",
+        "Diffusion layer with XOR operations",
+        "128-bit blocks",
+        "SPN structure"
+      ],
+      "HIGHT_fingerprints": [
+        "32 rounds",
+        "64-bit blocks",
+        "Generalized Feistel",
+        "Simple operations (XOR, rotation, addition)",
+        "Whitening keys",
+        "8 subkeys per round"
+      ],
+      "LEA_fingerprints": [
+        "24/28/32 rounds based on key size",
+        "ARX operations only",
+        "128-bit blocks",
+        "No S-boxes",
+        "Rotation constants: 9, 5, 3",
+        "Very fast software implementation"
+      ],
+      "HAS160_fingerprints": [
+        "160-bit output",
+        "80 rounds/steps",
+        "5 chaining variables (h0-h4)",
+        "Message expansion to 80 words",
+        "Similar structure to SHA-1 but different constants"
+      ],
+      "LSH_fingerprints": [
+        "224/256/384/512-bit outputs",
+        "Step-based compression",
+        "Wide internal state",
+        "Unique message mixing",
+        "Different from SHA-2/SHA-3 structure"
+      ],
+      "KCDSA_fingerprints": [
+        "DSA-like signature scheme",
+        "Uses HAS-160 typically",
+        "Certificate-based design",
+        "Korean domain parameters",
+        "Variables: p, q, g, x, y, r, s"
+      ],
+      "ECKCDSA_fingerprints": [
+        "Elliptic curve variant",
+        "Korean standardized curves",
+        "EC point operations",
+        "Certificate-based",
+        "Paired with HAS-160 or LSH"
+      ]
+    },
+
+    "contextual_clues": {
+      "usage_context": {
+        "SEED": "Banking transactions, financial data, payment gateways, hybrid encryption with AES",
+        "ARIA": "Government communications, official documents, secure messaging, VPN tunnels",
+        "HIGHT": "IoT devices, RFID tags, sensors, embedded systems, smart home devices",
+        "LEA": "Mobile payment apps, high-speed encryption, smartphone security, SDK implementations",
+        "HAS-160": "Digital signatures, PKI systems, certificate generation, document integrity",
+        "LSH": "Modern government systems, blockchain, new implementations post-2014",
+        "KCDSA": "Authentication servers, certificate authorities, government PKI",
+        "EC-KCDSA": "Mobile authentication, blockchain wallets, modern PKI systems"
+      },
+
+      "common_combinations": {
+        "SEED + AES": "Hybrid banking systems (domestic + international compatibility)",
+        "ARIA + HAS-160": "Government document processing and signing",
+        "HIGHT + KCDSA": "IoT device authentication",
+        "LEA + LSH": "Modern mobile payment with secure hashing",
+        "SEED + HAS-160": "Korean banking with digital signatures",
+        "ARIA + LSH": "Modern government cloud storage"
+      }
+    },
+
+    "code_comment_patterns": {
+      "direct_mentions": [
+        "Korean standard",
+        "domestic encryption",
+        "KISA approved",
+        "NIS certified",
+        "KCMVP validated",
+        "TTA standard"
+      ],
+      "indirect_mentions": [
+        "banking sector approved",
+        "government communications",
+        "lightweight for IoT",
+        "involution property",
+        "ARX design",
+        "certificate-based signature"
+      ],
+      "specification_references": [
+        "TTAS.KO",
+        "KS X",
+        "ISO/IEC 18033-3 (SEED, ARIA)",
+        "RFC 4269 (SEED)"
+      ]
+    }
+  },
+
+  "common_pitfalls": {
+    "misidentification_risks": [
+      {
+        "algorithm": "SEED",
+        "often_confused_with": "AES, Twofish, Camellia",
+        "reason": "All are 128-bit block ciphers, but SEED uses Feistel while AES uses SPN",
+        "differentiator": "Look for 16 rounds Feistel, SS0-SS3 S-boxes, constant 0x9e3779b9"
+      },
+      {
+        "algorithm": "ARIA",
+        "often_confused_with": "AES",
+        "reason": "Both are SPN structures with 128-bit blocks",
+        "differentiator": "ARIA has involution property, uses two different substitution layers"
+      },
+      {
+        "algorithm": "HIGHT",
+        "often_confused_with": "TEA, XTEA",
+        "reason": "All are lightweight ciphers with simple operations",
+        "differentiator": "HIGHT uses 32 rounds, generalized Feistel, whitening keys"
+      },
+      {
+        "algorithm": "LEA",
+        "often_confused_with": "ChaCha20, Salsa20",
+        "reason": "All use ARX operations",
+        "differentiator": "LEA is a block cipher (128-bit blocks), ChaCha20/Salsa20 are stream ciphers"
+      },
+      {
+        "algorithm": "HAS-160",
+        "often_confused_with": "SHA-1",
+        "reason": "Both output 160 bits and use similar structure",
+        "differentiator": "HAS-160 has different constants, message expansion, and step functions"
+      },
+      {
+        "algorithm": "LSH",
+        "often_confused_with": "SHA-256, SHA-512",
+        "reason": "Similar output sizes available",
+        "differentiator": "LSH has unique compression function, different message expansion"
+      }
+    ],
+
+    "context_is_key": [
+      "If code mentions 'Korean' or 'domestic' alongside block cipher → likely SEED or ARIA",
+      "If IoT/lightweight context + simple operations → likely HIGHT",
+      "If mobile payment + ARX operations → likely LEA",
+      "If signature + HAS-160 hash → likely KCDSA",
+      "If government + modern (post-2014) hash → likely LSH"
+    ]
+  },
+
+  "algorithm_timeline": {
+    "SEED": {
+      "year": "1998",
+      "status": "Widely deployed in legacy systems",
+      "international_recognition": "ISO/IEC 18033-3, RFC 4269"
+    },
+    "ARIA": {
+      "year": "2003",
+      "status": "Current government standard",
+      "international_recognition": "ISO/IEC 18033-3, RFC 5794"
+    },
+    "HIGHT": {
+      "year": "2006",
+      "status": "IoT standard",
+      "international_recognition": "ISO/IEC 18033-3"
+    },
+    "LEA": {
+      "year": "2013",
+      "status": "Modern mobile/software standard",
+      "international_recognition": "Korean domestic (not yet ISO)"
+    },
+    "HAS-160": {
+      "year": "2000",
+      "status": "Legacy hash function",
+      "international_recognition": "Korean domestic standard"
+    },
+    "LSH": {
+      "year": "2014-2015",
+      "status": "Modern hash standard",
+      "international_recognition": "Korean domestic (competing for ISO)"
+    },
+    "KCDSA": {
+      "year": "1998",
+      "status": "PKI signature standard",
+      "international_recognition": "ISO/IEC 14888-3"
+    },
+    "EC-KCDSA": {
+      "year": "2000s",
+      "status": "Modern PKI standard",
+      "international_recognition": "Korean domestic"
+    }
+  },
+
+  "detection_strategy": {
+    "step1_identify_crypto_type": "Block cipher, hash function, or signature scheme?",
+    "step2_check_parameters": "Block size, key size, round count, output size",
+    "step3_analyze_structure": "Feistel, SPN, ARX, compression function type",
+    "step4_look_for_markers": "Variable names, constants, function names",
+    "step5_consider_context": "Banking? Government? IoT? Mobile?",
+    "step6_check_combinations": "Is it used with other Korean algorithms?",
+    "step7_verify_fingerprints": "Match against structural fingerprints above",
+    "step8_cross_reference": "Does it match the timeline and usage patterns?"
+  },
+
+  "rag_usage_notes": {
+    "for_llm_systems": "Use this reference to identify cryptographic implementations without relying on explicit algorithm names",
+    "fingerprint_matching": "Match structural characteristics and code patterns to identify obfuscated implementations",
+    "context_aware": "Consider usage context (banking, government, IoT, mobile) to narrow down possibilities",
+    "combination_detection": "Korean algorithms are often used together or with international standards",
+    "avoid_false_positives": "Use multiple fingerprints to confirm identification, don't rely on single indicator"
+  }
+}
