@@ -66,8 +66,10 @@ htmlcov/
 logs/
 
 # Vector Database (ChromaDB)
-data/vector_db/
-chroma_db/
+# Note: Vector DB is now included in Git for quick deployment (16MB)
+# Uncomment below lines to exclude from Git:
+# data/vector_db/
+# chroma_db/
 
 # Temporary files
 *.tmp
