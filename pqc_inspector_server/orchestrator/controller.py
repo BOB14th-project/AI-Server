@@ -27,6 +27,76 @@ class OrchestratorController:
         }
         print("OrchestratorController가 AI 오케스트레이터와 함께 초기화되었습니다.")
 
+    async def analyze_all_files_from_db(self, scan_id: int, max_files: int = 100):
+        """
+        DB에 있는 모든 파일을 자동으로 검사합니다.
+        file_id를 1부터 max_files까지 순회하며 데이터가 있는 파일만 분석합니다.
+        """
+        print("=" * 80)
+        print(f"🚀 [전체 파일 분석 시작] Scan ID: {scan_id}, 최대 파일: {max_files}")
+        print("=" * 80)
+
+        results = []
+        total_attempted = 0
+        total_success = 0
+        total_failed = 0
+
+        for file_id in range(1, max_files + 1):
+            total_attempted += 1
+            print(f"\n{'='*80}")
+            print(f"📁 [{total_attempted}/{max_files}] File ID {file_id} 분석 시도 중...")
+            print(f"{'='*80}")
+
+            try:
+                result = await self.analyze_from_db(file_id, scan_id)
+
+                if result.get("success"):
+                    total_success += 1
+                    print(f"✅ File ID {file_id} 분석 성공")
+                    results.append({
+                        "file_id": file_id,
+                        "status": "success",
+                        "message": "분석 완료"
+                    })
+                else:
+                    # 데이터가 없는 경우 - 실패로 카운트하지 않음
+                    error_msg = result.get("error", "")
+                    if "데이터가 없습니다" in error_msg:
+                        print(f"⏭️  File ID {file_id} - 데이터 없음, 건너뜀")
+                        total_attempted -= 1  # 실제 시도 횟수에서 제외
+                    else:
+                        total_failed += 1
+                        print(f"❌ File ID {file_id} 분석 실패: {error_msg}")
+                        results.append({
+                            "file_id": file_id,
+                            "status": "failed",
+                            "error": error_msg
+                        })
+
+            except Exception as e:
+                total_failed += 1
+                print(f"❌ File ID {file_id} 분석 중 예외 발생: {e}")
+                results.append({
+                    "file_id": file_id,
+                    "status": "error",
+                    "error": str(e)
+                })
+
+        print("\n" + "=" * 80)
+        print(f"🎉 [전체 분석 완료]")
+        print(f"   - 총 시도: {total_attempted}개 파일")
+        print(f"   - 성공: {total_success}개")
+        print(f"   - 실패: {total_failed}개")
+        print("=" * 80)
+
+        return {
+            "scan_id": scan_id,
+            "total_attempted": total_attempted,
+            "total_success": total_success,
+            "total_failed": total_failed,
+            "results": results
+        }
+
     async def analyze_from_db(self, file_id: int, scan_id: int):
         """
         DB에서 모든 데이터를 가져와서 종합 분석을 수행하고 결과를 DB에 저장합니다.
@@ -175,7 +245,7 @@ class OrchestratorController:
 
             comprehensive_prompt = f"""당신은 양자컴퓨팅 보안 전문가입니다.
 다음 파일(File ID: {file_id}, Scan ID: {scan_id})에 대한 다중 에이전트 분석 결과를 종합하여
-상세한 보안 분석 리포트를 작성해주세요.
+프론트엔드에서 활용할 수 있도록 구조화된 보안 분석 리포트를 작성해주세요.
 
 === 분석 데이터 ===
 어셈블리 코드: {len(db_data.get('assembly_text', '')) if db_data.get('assembly_text') else 0} bytes
@@ -190,33 +260,129 @@ class OrchestratorController:
 코드: {db_data.get('generated_code', '')[:500] if db_data.get('generated_code') else 'N/A'}
 로그: {db_data.get('logs', '')[:500] if db_data.get('logs') else 'N/A'}
 
-다음 내용을 포함한 상세한 분석 리포트를 작성해주세요:
+**중요: 다음 3개 카테고리로 명확하게 구분하여 작성해주세요. 프론트엔드에서 파싱할 것입니다.**
 
-1. 전체 요약 (Executive Summary)
-   - 전반적인 보안 상태 평가
-   - 주요 발견사항 요약
+리포트는 반드시 다음 마크다운 구조를 따라야 합니다:
 
-2. 발견된 취약점 상세 분석
-   - 각 에이전트가 발견한 취약점 통합 분석
-   - 비양자내성 암호 알고리즘 목록 및 사용 위치
-   - 위험도 평가 (High/Medium/Low)
+---
 
-3. 기술적 분석
-   - 어셈블리 레벨 분석 결과
-   - 소스코드 레벨 분석 결과
-   - 로그/설정 분석 결과
-   - 각 레벨 간 연관성 분석
+# 1. 스캔 대상
 
-4. 권장사항
-   - 즉시 조치 필요 항목
-   - 중장기 개선 방안
-   - 양자내성 암호로의 마이그레이션 로드맵
+**File ID**: {file_id}
+**Scan ID**: {scan_id}
 
-5. 종합 신뢰도 및 결론
-   - 분석 결과의 신뢰도 평가
-   - 최종 결론 및 종합 의견
+## 1.1 파일 정보
+- **분석 대상 파일**: [파일명 또는 식별자]
+- **파일 타입**: [어셈블리/소스코드/로그 등]
+- **파일 크기**: [바이트 단위]
+- **분석 일시**: [현재 날짜/시간]
 
-리포트는 마크다운 형식으로 작성하되, 기술적이면서도 명확하게 작성해주세요."""
+## 1.2 검사 범위
+- **검사한 암호 알고리즘**: [탐지된 알고리즘 나열]
+- **분석 레벨**: [어셈블리/소스코드/로그 중 수행된 것]
+- **사용된 AI 에이전트**: [실행된 에이전트 목록]
+
+## 1.3 전체 요약
+- **보안 상태**: [양호/주의/위험 중 하나]
+- **PQC 취약점 발견**: [예/아니오]
+- **위험도 등급**: [High/Medium/Low]
+- **종합 신뢰도**: [0.0-1.0 점수]
+
+---
+
+# 2. 상세 내용
+
+## 2.1 발견된 취약점
+[각 취약점마다 다음 형식으로 작성]
+
+### 취약점 #1: [알고리즘명] (예: RSA-2048)
+- **심각도**: [High/Medium/Low]
+- **발견 위치**: [어셈블리/코드/로그]
+- **탐지 근거**: [구체적인 증거 코드 또는 패턴]
+- **양자컴퓨터 위협**: [Shor 알고리즘/Grover 알고리즘 등]
+- **예상 피해**: [구체적인 보안 영향]
+
+### 취약점 #2: [알고리즘명]
+...
+
+## 2.2 기술적 분석
+
+### 어셈블리 레벨 분석
+- **분석 결과**: [구체적인 발견 사항]
+- **암호 함수 호출**: [탐지된 함수명]
+- **코드 패턴**: [특이사항]
+
+### 소스코드 레벨 분석
+- **분석 결과**: [구체적인 발견 사항]
+- **라이브러리 사용**: [사용된 암호 라이브러리]
+- **구현 방식**: [특이사항]
+
+### 로그/설정 분석
+- **분석 결과**: [구체적인 발견 사항]
+- **설정 이슈**: [보안 설정 문제]
+- **로그 패턴**: [특이사항]
+
+## 2.3 종합 평가
+- **전반적 보안 수준**: [평가 내용]
+- **주요 위험 요소**: [핵심 문제점]
+- **긍정적 요소**: [잘 된 부분]
+
+---
+
+# 3. 전환 가이드
+
+## 3.1 즉시 조치 필요 사항 (High Priority)
+1. **[취약점명]**: [구체적 조치 방법]
+2. **[취약점명]**: [구체적 조치 방법]
+
+## 3.2 양자내성 암호 전환 로드맵
+
+### 단기 계획 (1-3개월)
+1. **현재 암호 → PQC 암호 매핑**
+   - RSA-2048 → CRYSTALS-Kyber (키 교환)
+   - ECDSA → CRYSTALS-Dilithium (전자서명)
+   - AES-128 → AES-256 (대칭키 강화)
+
+2. **마이그레이션 우선순위**
+   - [High] [항목1]
+   - [Medium] [항목2]
+   - [Low] [항목3]
+
+### 중기 계획 (3-6개월)
+1. **하이브리드 암호 시스템 도입**
+   - 기존 알고리즘 + PQC 알고리즘 병행
+   - 점진적 전환을 통한 안정성 확보
+
+2. **테스트 및 검증**
+   - 성능 테스트
+   - 호환성 검증
+   - 보안 감사
+
+### 장기 계획 (6-12개월)
+1. **완전한 PQC 전환**
+   - 모든 레거시 암호 제거
+   - PQC 표준 준수
+   - 지속적 모니터링 체계 구축
+
+## 3.3 권장 라이브러리 및 도구
+- **NIST PQC 표준 라이브러리**: [구체적인 라이브러리명과 버전]
+- **호환성 도구**: [마이그레이션 도구]
+- **모니터링 도구**: [보안 검사 도구]
+
+## 3.4 추가 리소스
+- **NIST PQC 프로젝트**: [관련 문서 링크]
+- **마이그레이션 가이드**: [참고 자료]
+- **기술 지원**: [전문가 연락처 또는 커뮤니티]
+
+---
+
+**리포트 작성 완료**
+**생성 일시**: [현재 시간]
+**담당 AI**: PQC Inspector AI Orchestrator
+
+---
+
+위 형식을 정확히 따라 마크다운으로 작성해주세요. 각 섹션은 반드시 `# 1. 스캔 대상`, `# 2. 상세 내용`, `# 3. 전환 가이드`로 시작해야 합니다."""
 
             # AI 오케스트레이터 호출
             orchestrator_response = await self.ai_service.generate_response(

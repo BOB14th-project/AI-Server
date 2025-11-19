@@ -20,6 +20,9 @@ python-docx           # DOCX 처리
 markdown              # 마크다운 처리
 beautifulsoup4        # HTML 파싱 (마크다운용)
 
+#--- 바이너리 분석 의존성 ---
+capstone              # 디스어셈블러 (바이너리 → 어셈블리)
+
 #--- 레거시 AI/ML 패키지 (필요시 주석 해제) ---
 # ollama # 로컬 Ollama 사용시
 # transformers

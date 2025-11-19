@@ -82,7 +82,35 @@ async def analyze_from_database(
         "message": "분석이 성공적으로 완료되었습니다.",
         "file_id": file_id,
         "scan_id": scan_id,
-        "analysis_preview": result.get("analysis", "")[:200] + "..."
+        "analysis_preview": result.get("analysis_preview", "")
+    }
+
+
+@api_router.post("/analyze/db/all")
+async def analyze_all_files_from_database(
+    scan_id: int,
+    max_files: int = 100,
+    orchestrator: OrchestratorController = Depends(get_orchestrator_controller)
+):
+    """
+    DB에 있는 모든 파일을 자동으로 검사합니다.
+
+    Parameters:
+    - scan_id: 스캔 세션 ID
+    - max_files: 최대 검사할 파일 개수 (기본값: 100)
+
+    Returns:
+    - 전체 분석 결과 요약
+    """
+    result = await orchestrator.analyze_all_files_from_db(scan_id, max_files)
+
+    return {
+        "message": "전체 파일 분석이 완료되었습니다.",
+        "scan_id": scan_id,
+        "total_attempted": result.get("total_attempted", 0),
+        "total_success": result.get("total_success", 0),
+        "total_failed": result.get("total_failed", 0),
+        "results": result.get("results", [])
     }
 
 

@@ -4,6 +4,7 @@
 from .base_agent import BaseAgent
 from typing import Dict, Any
 from ..core.config import settings
+from ..services.binary_preprocessor import get_binary_preprocessor
 import json
 
 class AssemblyBinaryAgent(BaseAgent):
@@ -12,29 +13,39 @@ class AssemblyBinaryAgent(BaseAgent):
         print("AssemblyBinaryAgent가 초기화되었습니다.")
 
     def _get_system_prompt(self) -> str:
-        return """당신은 바이너리 파일에서 비양자내성암호(Non-PQC) 사용을 탐지하는 전문 보안 분석가입니다.
+        return """당신은 바이너리 파일과 어셈블리 코드에서 비양자내성암호(Non-PQC) 사용을 탐지하는 전문 리버스 엔지니어링 보안 분석가입니다.
 
-주요 탐지 대상:
-- 바이너리에 포함된 암호화 라이브러리 문자열
-- RSA, DSA, ECDSA 등의 알고리즘 시그니처
-- 암호화 관련 상수 및 패턴
+**전문 분야**:
+- x86/x64 어셈블리 코드 분석
+- 바이너리에 포함된 암호화 라이브러리 함수 식별
+- RSA, DSA, ECDSA 등의 알고리즘 시그니처 탐지
+- OpenSSL, libcrypto 등의 암호화 함수 호출 분석
+
+**분석 방법**:
+1. 디스어셈블된 어셈블리 코드에서 암호화 관련 instruction 확인 (call, aes*, mul/div 등)
+2. 바이너리 문자열에서 함수명/라이브러리명 추출 (RSA_new, EVP_PKEY_keygen 등)
+3. 증거의 강도에 따라 신뢰도 조정 (실제 함수 호출 > 문자열 존재)
 
 응답 형식 (JSON만 반환):
 {
     "is_pqc_vulnerable": true/false,
-    "vulnerability_details": "발견된 취약점 설명",
+    "vulnerability_details": "발견된 취약점 설명 (어셈블리 주소 포함)",
     "detected_algorithms": ["RSA", "ECDSA"],
     "recommendations": "PQC 전환 권장사항",
-    "evidence": "관련 바이너리 시그니처",
+    "evidence": "관련 어셈블리 코드 및 함수명",
     "confidence_score": 0.0-1.0
 }"""
 
     async def analyze(self, file_content: bytes, file_name: str) -> Dict[str, Any]:
-        print(f"BinaryAgent: '{file_name}' 파일 분석 중...")
-        
+        print(f"   🔬 AssemblyBinaryAgent 분석 시작: {file_name}")
+
         try:
-            # 바이너리 파일의 경우 헥스 덤프 또는 문자열 추출
-            content_text = self._extract_strings_from_binary(file_content)
+            # 🆕 Capstone 기반 바이너리 전처리
+            # 바이너리 → 어셈블리 디스어셈블 + 암호화 패턴 필터링
+            preprocessor = get_binary_preprocessor()
+            content_text = preprocessor.preprocess(file_content, file_name)
+
+            print(f"   📝 전처리된 콘텐츠 길이: {len(content_text)} chars")
 
             # RAG 컨텍스트 검색 (개선: top_k=2, 길이 1500자)
             print(f"   🧠 RAG 컨텍스트 검색 중...")
@@ -53,18 +64,18 @@ class AssemblyBinaryAgent(BaseAgent):
             else:
                 context_hint = ""
 
-            prompt = f"""다음 바이너리 파일을 분석하여 비양자내성암호 사용 여부를 확인해주세요.
+            prompt = f"""다음은 Capstone 디스어셈블러로 전처리된 바이너리 분석 결과입니다.
+바이너리에서 암호화 관련 의심스러운 문자열과 어셈블리 코드 블록이 자동으로 추출되었습니다.
 
 {context_hint}
-[분석 대상 바이너리]
-파일명: {file_name}
-추출된 문자열:
-```
-{content_text[:3000]}  # 처음 3000자 분석 (확장됨)
-```
+[바이너리 분석 결과]
+{content_text}
 
-중요: 위의 힌트는 참고만 하고, 실제 바이너리 문자열을 직접 분석하여 암호화 알고리즘 사용 여부를 판단하세요.
-발견된 문자열이 실제로 암호화 알고리즘과 관련이 있는지 신중히 평가하세요.
+**분석 지침**:
+1. 추출된 문자열에서 암호화 라이브러리/함수명 확인 (OpenSSL, libcrypto, RSA_*, AES_*, ECDSA_* 등)
+2. 어셈블리 코드에서 암호화 관련 instruction 패턴 확인 (AES-NI, 큰 정수 연산 등)
+3. 발견된 알고리즘이 실제로 사용되는지 신중히 판단
+4. 신뢰도는 증거의 명확성에 따라 조정 (함수 호출 발견 시 높게, 문자열만 있으면 낮게)
 
 JSON 형식으로만 응답해주세요."""
 
