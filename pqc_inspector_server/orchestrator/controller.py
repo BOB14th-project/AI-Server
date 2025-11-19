@@ -123,11 +123,14 @@ class OrchestratorController:
                 print("=" * 80)
                 print(f"🎉 [완료] File ID [{file_id}], Scan ID [{scan_id}] 전체 분석 프로세스 완료!")
                 print("=" * 80)
+
+                # 프론트엔드 응답용 데이터
                 return {
                     "success": True,
                     "file_id": file_id,
                     "scan_id": scan_id,
-                    "analysis": comprehensive_analysis
+                    "message": "분석이 완료되어 DB에 저장되었습니다.",
+                    "analysis_preview": comprehensive_analysis[:500] + "..." if len(comprehensive_analysis) > 500 else comprehensive_analysis
                 }
             else:
                 print("❌ [4단계 실패] DB 저장 실패")

@@ -65,6 +65,11 @@ htmlcov/
 *.log
 logs/
 
+# ngrok
+.ngrok_url
+ngrok.log
+nohup.out
+
 # Vector Database (ChromaDB)
 # Note: Vector DB is now included in Git for quick deployment (16MB)
 # Uncomment below lines to exclude from Git:

@@ -20,6 +20,7 @@ class ExternalAPIClient:
         """
         DB에서 어셈블리 텍스트를 가져옵니다.
         GET /files/{file_id}/llm/?scan_id={scan_id}
+        GitHub 스키마: LLMAssemblyGet { Field_text: str }
         """
         try:
             response = await self.client.get(
@@ -30,7 +31,8 @@ class ExternalAPIClient:
             data = response.json()
 
             if data and len(data) > 0:
-                return data[0].get("File_text")
+                # GitHub 코드에서는 Field_text를 반환
+                return data[0].get("Field_text") or data[0].get("File_text")
             return None
         except httpx.HTTPStatusError as e:
             print(f"DB API 오류 (어셈블리 조회): {e.response.status_code} - {e.response.text}")
