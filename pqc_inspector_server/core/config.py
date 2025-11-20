@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # --- 프로젝트 설정 ---
     PROJECT_NAME: str = "PQC Inspector"
     API_V1_STR: str = "/api/v1"
-    SERVER_HOST: str = "127.0.0.1"
+    SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
 
     # --- 외부 API 설정 ---

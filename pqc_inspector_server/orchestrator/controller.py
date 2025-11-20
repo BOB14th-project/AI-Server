@@ -3,6 +3,7 @@
 
 from fastapi import UploadFile, Depends
 from typing import Optional
+from datetime import datetime
 
 # --- 의존성 임포트 변경 및 추가 ---
 from ..db.api_client import ExternalAPIClient, get_api_client
@@ -15,6 +16,9 @@ from ..core.config import settings
 import json
 
 class OrchestratorController:
+    # 클래스 레벨에서 작업 결과를 저장 (모든 인스턴스가 공유)
+    _shared_task_results: dict = {}
+
     def __init__(self, api_client: ExternalAPIClient):
         # 의존성 주입을 통해 외부 API 클라이언트와 에이전트들을 초기화합니다.
         self.api_client = api_client
@@ -425,8 +429,15 @@ JSON 형식으로만 응답:
             final_result = self._create_error_result(filename, file_type, "지원하지 않는 파일 타입")
 
         if final_result:
-            # 외부 API에 최종 결과 저장 (레거시 지원)
-            print(f"\n💾 [4단계] 분석 완료")
+            # 작업 결과를 클래스 레벨 딕셔너리에 저장하여 나중에 조회 가능하도록 함
+            # task_id와 analysis_timestamp 추가
+            result_dict = final_result.dict()
+            result_dict['task_id'] = task_id
+            result_dict['analysis_timestamp'] = datetime.utcnow().isoformat()
+
+            OrchestratorController._shared_task_results[task_id] = result_dict
+            print(f"\n💾 [4단계] 분석 결과를 task_id [{task_id}]로 저장 완료")
+            print(f"   현재 저장된 작업 수: {len(OrchestratorController._shared_task_results)}")
             print("=" * 80)
             print(f"🎉 [완료] 작업 ID [{task_id}] 전체 분석 프로세스 완료!")
             print("=" * 80)
@@ -598,10 +609,20 @@ JSON 형식으로만 응답:
 
     async def get_analysis_result(self, task_id: str):
         """
-        주어진 작업 ID에 해당하는 분석 결과를 외부 API에서 조회합니다. (레거시)
+        주어진 작업 ID에 해당하는 분석 결과를 조회합니다.
         """
-        print(f"작업 ID [{task_id}] - 레거시 메서드 호출")
-        return None
+        print(f"📊 [조회] 작업 ID [{task_id}] 결과 조회 시도...")
+        print(f"   현재 저장된 작업 수: {len(OrchestratorController._shared_task_results)}")
+        print(f"   저장된 task_id 목록: {list(OrchestratorController._shared_task_results.keys())}")
+
+        result = OrchestratorController._shared_task_results.get(task_id)
+
+        if result:
+            print(f"✅ [조회 성공] 작업 ID [{task_id}] 결과 반환")
+            return result
+        else:
+            print(f"❌ [조회 실패] 작업 ID [{task_id}] 결과가 없거나 아직 분석 중")
+            return None
 
 # FastAPI의 의존성 주입(Dependency Injection) 시스템을 위한 함수입니다.
 # 외부 API 클라이언트를 컨트롤러에 주입합니다.
